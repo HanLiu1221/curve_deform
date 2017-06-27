@@ -16,7 +16,8 @@ T = zeros(n2, n2);
 
 % weights
 w_lap = 0.1; % laplacian smoothing
-w_ar = 0.9; % attraction-repulsion
+w_ar = 0.7; % attraction-repulsion
+w_mot = 0.2; % brownian motion
 
 %% Laplacian force & labeling
 neig = 1;
