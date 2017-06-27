@@ -1,4 +1,4 @@
-function curve = deformCurve(curve, Trunk)
+function curve = deformCurve_using_normalize(curve, Trunk)
 
 % n pieces of curves
 nPs = length(curve);
@@ -15,8 +15,8 @@ points = zeros(n2, 1);
 T = zeros(n2, n2); 
 
 % weights
-w_lap = 0.1; % laplacian smoothing
-w_ar = 0.9; % attraction-repulsion
+w_lap = 0.2; % laplacian smoothing
+w_ar = 0.8; % attraction-repulsion
 w_mot = 0.2; % brownian motion
 
 %% Laplacian force & labeling
@@ -32,14 +32,18 @@ for i = 1:nPs
         if j > neig && j <= length(curve{i}) - neig
             pre = id - neig;
             post = id + neig;
-            % no need to normalize since the offset can be very small
-            % based on the number of sample points
-            T(2 * id - 1, pre * 2 - 1) = 0.5 * w_lap;
-            T(2 * id, pre * 2) = 0.5 * w_lap;
-            T(2 * id - 1, post * 2 - 1) = 0.5 * w_lap;
-            T(2 * id, post * 2) = 0.5 * w_lap;
-            T(2 * id - 1, 2 * id - 1) = -w_lap;
-            T(2 * id, 2 * id) = -w_lap;
+            p_pre = [curve{i}(j - neig, 1), curve{i}(j - neig, 2)];
+            p_pos = [curve{i}(j + neig, 1), curve{i}(j + neig, 2)];
+            p = [curve{i}(j, 1), curve{i}(j, 2)];
+            d = norm((p_pre + p_pos) / 2 - p); 
+            % normalize the vector for weighting
+            w = 1.0 / d * w_lap;
+            T(2 * id - 1, pre * 2 - 1) = 0.5 * w;
+            T(2 * id, pre * 2) = 0.5 * w;
+            T(2 * id - 1, post * 2 - 1) = 0.5 * w;
+            T(2 * id, post * 2) = 0.5 * w;
+            T(2 * id - 1, 2 * id - 1) = -w;
+            T(2 * id, 2 * id) = -w;
         end
         id = id + 1;
     end
@@ -67,13 +71,11 @@ for i = 1:n
 end
 avgd = avgd / nd;
 
-k0 = 0.3;
+k0 = 0.1;
 k1 = 2.0 * k0;
 R0 = k0 * avgd;
 sigma = R0;
 R1 = k1 * avgd;
-
-R0 = 0.1 * maxd;
 
 % % the maixmum distance between any two points on the curves, for
 % % normalization, using the vertices on the truck for efficiency
@@ -92,6 +94,7 @@ R0 = 0.1 * maxd;
 k = 0.01;
 % consider nearby points within radius R0
 thr = 1e-4;
+ncount = 0;
 for i = 1:n
     pi = points(2 * i - 1 : 2 * i);
     % end points cannot be moved
@@ -101,7 +104,6 @@ for i = 1:n
     end
     % attraction
     sum_w = 0;
-    nneig = 0;
     for j = 1:n
         % the force between points on the same curve is 0
         if label(i) == label(j)
@@ -110,19 +112,22 @@ for i = 1:n
         pj = points(2 * j - 1 : 2 * j);
         % distance
         d = norm(pj - pi);
+%         if d / avgd < R0 && d > thr
         if d < R0 && d > thr
             d = d / maxd;
             w = k * (1 - d) * w_ar;
-            T(2 * i - 1, 2 * j - 1) = w + T(2 * i - 1, 2 * j - 1);
-            T(2 * i, 2 * j) = w + T(2 * i, 2 * j);
+%             w = LJ(sigma, d / avgd);
+%             w = w / d * w_ar;
+            T(2 * i - 1, 2 * j - 1) = T(2 * i - 1, 2 * j - 1) + w;
+            T(2 * i, 2 * j) = T(2 * i, 2 * j) + w;
             sum_w = sum_w - w;
-            nneig = nneig + 1;
+            ncount = ncount + 1;
         end
     end % each i
-    nneig
     T(2 * i - 1, 2 * i - 1) = sum_w + T(2 * i - 1, 2 * i - 1);
     T(2 * i, 2 * i) = sum_w + T(2 * i, 2 * i);
 end
+ncount
 points = points + T * points;
 
 % re-assign
