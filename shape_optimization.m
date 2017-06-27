@@ -52,10 +52,13 @@ show_curves(controlPs, tran_controlPs);
 %  3.1 define a local region, using r, to compute the attraction force
 [~,~,area_overlap] = compute_gap_overlap_area(controlPs, T_P);
 iter = 1;
-thr = 1e-6;
+thr = 1e-4;
 curve = controlPs;
+
 while area_overlap > thr
+    tic;
     curve = deformCurve(curve, T_P);
+    toc
     [~,~,area_overlap] = compute_gap_overlap_area(curve, T_P);
     iter = iter + 1;
     
