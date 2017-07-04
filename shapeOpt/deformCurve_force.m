@@ -1,4 +1,4 @@
-function curve = deformCurve(curve, Trunk)
+function curve = deformCurve_force(curve, Trunk, weights)
 
 % n pieces of curves
 nPs = length(curve);
@@ -15,8 +15,8 @@ points = zeros(n2, 1);
 T = zeros(n2, n2); 
 
 % weights
-w_lap = 0.1; % laplacian smoothing
-w_ar = 0.9; % attraction-repulsion
+w_lap = weights(1); % laplacian smoothing
+w_ar = weights(2); % attraction-repulsion
 w_mot = 0.2; % brownian motion
 
 %% Laplacian force & labeling
@@ -73,7 +73,7 @@ R0 = k0 * avgd;
 sigma = R0;
 R1 = k1 * avgd;
 
-R0 = 0.1 * maxd;
+R0 = 0.15 * maxd;
 
 % % the maixmum distance between any two points on the curves, for
 % % normalization, using the vertices on the truck for efficiency

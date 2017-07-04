@@ -15,8 +15,9 @@ addpath(genpath('./'));
 
 %% 1 load curves
 load('./input/curves4deform.mat');
-P = curves4deform(90).curves1; % P
-Q = curves4deform(90).curves2; % Q
+id = 210;
+P = curves4deform(id).curves1; % P
+Q = curves4deform(id).curves2; % Q
 
 % 1.1 get trunks
 T_P = get_candidate_trunk(P); % T_P
@@ -32,7 +33,7 @@ show_curves(P, tran_P);
 
 %% 1. sample points on the boundary curve
 n = length(P);
-d_sample = 0.05;
+d_sample = 0.005;
 ctrlPnts = cell(n,1);
 for i = 1:n
     [ctrlPnts{i},idx_CPs] = extract_control_points(P{i}, d_sample);   
@@ -54,10 +55,13 @@ show_curves(controlPs, tran_controlPs);
 iter = 1;
 thr = 1e-4;
 curve = controlPs;
-
-while area_overlap > thr
+weights = [0.1, 0.9];
+while area_overlap > 0.01
     tic;
-    curve = deformCurve(curve, T_P);
+    %curve = deformCurve_force(curve, T_P, weights);
+    curve = deformCurve_lap(curve, T_P, weights);
+    weights(1) = weights(1) * 1.1;
+    weights(2) = 1 - weights(1);
     toc
     [~,~,area_overlap] = compute_gap_overlap_area(curve, T_P);
     iter = iter + 1;
@@ -66,5 +70,19 @@ while area_overlap > thr
     tran_curve = transform_curves(curve, T_Q, scale);
     show_curves(curve, tran_curve);
 end
+
+% C = controlPs;
+% s = 0.99;
+% while area_overlap > thr
+%     for i = 1:n
+%         newC = C{i};
+%         newC = scale_poly(newC, s);
+%         C{i}(2:end-1,:) = newC(2:end-1,:);
+%         [~,~,area_overlap] = compute_gap_overlap_area(C, T_P);
+%     end
+%     % visualize
+%     tC = transform_curves(C, T_Q, scale);
+%     show_curves(C, tC);
+% end
 
 end

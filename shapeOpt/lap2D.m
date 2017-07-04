@@ -2,7 +2,7 @@
 % Adapted from: Matlab script for 2D Laplacian Editing
 % 06/20/2017
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function defCurv = lap2D(curve, static_anchors, handle_anchors)
+function defCurv = lap2D(curve, static_anchors, handle_anchors, offset)
 
 n=length(curve);
 
@@ -89,21 +89,25 @@ end;
 
 % displaying the curve: static anchors are in black, the handle to be moved
 % in red.
-figure(1);
+figure;
 plot(curve(:,1),curve(:,2),'b-',...
      curve(static_anchors,1),curve(static_anchors,2),'*k',...
      curve(handle_anchors,1),curve(handle_anchors,2),'*r');
 axis equal;
 
-% moving the handle (ok to click outside the figure axes as well)
-[x_input y_input] = ginput(1);
+% moving the handle
+handles = curve(handle_anchors, :);
+new_handles = handles + offset;
+%[x_input y_input] = new_handles;
+x_input = new_handles(1);
+y_input = new_handles(2);
 lenr = length(rhs);
 rhs((lenr-1):lenr) = [x_input y_input]';
 anch_pos(length(anch_pos),:) = [x_input y_input];
 
 % moving second handle vertex if exists
 if length(handle_anchors) > 1
-    [x_input y_input] = ginput(1);
+    [x_input y_input] = new_handles(2, :);
     rhs((lenr-3):(lenr-2)) = [x_input y_input]';
     anch_pos(length(anch_pos)-1,:) = [x_input y_input];
 end
@@ -113,7 +117,7 @@ end
 curve_col = A_prime\rhs;
 defCurv = [curve_col(1:n) curve_col((n+1):(2*n))];
 
-figure(2);
+figure;
 plot(curve(:,1),curve(:,2),'g-',...
      defCurv(:,1),defCurv(:,2),'-b',...
      defCurv(anchors,1),defCurv(anchors,2),'*k',...
