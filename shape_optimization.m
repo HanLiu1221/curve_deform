@@ -28,8 +28,8 @@ scale = 0;
 tran_P = transform_curves(P, T_Q, scale);
 tran_Q = transform_curves(Q, T_P, scale);
 
-show_curves(P, tran_P, 0, Q, tran_Q);
-show_curves(P, tran_P, 0);
+% show_curves(P, tran_P, 0, Q, tran_Q);
+% show_curves(P, tran_P, 0);
 
 %% 1. sample points on the boundary curve
 n = length(P);
@@ -42,7 +42,7 @@ end
 scale = 0;
 oriControlPs = ctrlPnts;
 tran_oriControlPs = transform_curves(ctrlPnts, T_Q, scale);
-show_curves(oriControlPs, tran_oriControlPs, 1);
+% show_curves(oriControlPs, tran_oriControlPs, 1);
 
 %% 2. handle pieces that go beyond the trunk
 controlPs = remove_outside_regions(ctrlPnts, T_P);
@@ -58,14 +58,35 @@ curve = controlPs;
 for i = 1 : length(curve)
     curve{i} = removeReps(curve{i});
 end
-weights = [0.1, 0.9];
-while area_overlap > 0.001
-    tic;
-    %curve = deformCurve_force(curve, T_P, weights);
-    curve = deformCurve_lap(curve, T_P, weights);
-    weights(1) = weights(1) * 1.1;
-    weights(2) = 1 - weights(1);
-    toc
+% find feature points
+%% find feature points
+nCurves = length(curve);
+featIds_noSplit = cell(1, nCurves);
+feaIds = cell(1, nCurves);
+figure;
+for i = 1:nCurves
+    feaIds{i} = getSplitCurvePointIds(curve{i});
+    npnts = length(curve{i});
+    featIds_noSplit{i} = [1, floor((1 + npnts) / 2), npnts];
+    % draw
+    plot(curve{i}(:,1), curve{i}(:,2), 'k-');
+    hold on
+    % split points
+    splitIds = [feaIds{i}(:, 1)', npnts];
+    plot(curve{i}(splitIds,1), curve{i}(splitIds,2), 'r--o', 'LineWidth',2);
+    hold on
+end
+legend('original polyline', 'simplified');
+
+while area_overlap > thr
+    %tic;
+    %curve = deformCurve_force(curve, T_P);
+    if (length(curve{i}) > 0.1) 
+        curve = deformCurve_lap(curve, T_P, featIds_noSplit, 1);
+    else
+        curve = deformCurve_lap(curve, T_P, feaIds, 0);
+    end
+    %toc
     [~,~,area_overlap] = compute_gap_overlap_area(curve, T_P);
     iter = iter + 1;
     

@@ -5,6 +5,7 @@ function splitPointIds = getSplitCurvePointIds(curve)
 
 % simplify the polygon
 d = 0.01;
+nthr = 20;
 simp = dpsimplify(curve, d);
 sids = findPointIndices(curve, simp);
 % keep only those with curvature changes
@@ -18,6 +19,9 @@ for i = 1:length(sids)
     if id <= dt || id >= length(curve) - dt
         continue;
     end
+    if j > 1 && id - pids(j - 1) < nthr
+        continue;
+    end
 %     if isInflectionPoint(curvature, id, dt) == 1
 %         pids(j) = id;
 %         j = j + 1;
@@ -29,12 +33,12 @@ for i = 1:length(sids)
     dotp = dot(post - cur, pre - cur);
     dotp = dotp / (norm(pre - cur) * norm(post - cur));
     angle = acos(dotp);
-    if angle < thr
+    if angle < thr 
         pids(j) = id;
         j = j + 1;
     end
 end
-curvature(pids(1, 1 :j - 1))
+% curvature(pids(1, 1 :j - 1))
 splitPointIds = zeros(j, 3);
 for i = 1 : j
     if i == 1
