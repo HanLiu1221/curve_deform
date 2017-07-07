@@ -22,11 +22,7 @@ deformed = cell(1, nCurves);
 for i = 1 : nCurves
     nseg = size(feaIds{i}, 1);
     deformed{i} = curve{i};
-    % make a closed curve for lap neighboring
-%     npnts = size(curve{i}, 1);
-%     iline = samplePntsOnLine(curve{i}(npnts, :), curve{i}(1, :), npnts);
-    %closedCurve = [curve{i}; iline];
-    closedCurve = curve{i};
+    currCurve = curve{i};
     % for each curve segment
     for s = 1 : nseg
         activePids = feaIds{i}(s, 1) : feaIds{i}(s, 3);
@@ -43,49 +39,42 @@ for i = 1 : nCurves
         end
         % points to compute
         ipoints = curve{i}(s1 : s2, :);
-        offset = zeros(1, 2);
-        nneig = 0;
-        maxoff = 0;
-        max_offset = [0, 0];
+        max_off_s = 0;
+        max_offset_s = [0, 0];
         max_handleId = floor((s1 + s2)/2);
-        for j = 1 : nCurves
-            if i == j
-                continue;
-            end
-            jpoints = curve{j};
-            for ip = 1 : size(ipoints, 1)
-                pi = ipoints(ip, :);
+        for ip = 1 : size(ipoints, 1)
+            pi = ipoints(ip, :);
+            % find nearest neighboring point
+            min_dij = intmax('int64');
+            min_offset_ij = [0, 0];
+            for j = 1 : nCurves
+                if i == j
+                    continue;
+                end
+                jpoints = curve{j};
                 for jp = 1 : size(jpoints, 1)
                     pj = jpoints(jp, :);
                     d = norm(pj - pi);
                     dir = (pj - pi) / d;
-                    if d < R0 && d > thr
-                        d = d / maxd;
-                        off = d * dir;
-                        offset = offset + off;
-                        nneig = nneig + 1;
-                        if d > maxoff
-                            maxoff = d;
-                            max_handleId = feaIds{i}(s) + ip - 1;
-                            max_offset = off;
-                        end
+                    if d < min_dij
+                        min_dij = d;
+                        min_offset_ij = d / 2 * dir;
                     end
-                end % j curve
-            end % i curve s segment
-        end % compute offset from other curves 
-        offset = offset / nneig;
+                end
+            end % j curve
+            if min_dij > max_off_s
+                max_off_s = min_dij;
+                max_offset_s = min_offset_ij;
+                max_handleId = feaIds{i}(s, 1) + ip - 1;
+            end
+        end % point ip at i curve s segment
         % deform
         nh = 1;
         handle_anchor = zeros(1, nh);
         offsets = zeros(nh, 2);
-        if mode == 0
-            handle_anchor(1) = feaIds{i}(s, 2);   
-            offsets(1, :) = offset;
-        else 
-            handle_anchor(1) = max_handleId;
-            offsets(1, :) = max_offset;
-        end
-        iDeformed = lap2D(closedCurve, static_anchor, handle_anchor, offsets);
+        handle_anchor(1) = max_handleId;   
+        offsets(1, :) = max_offset_s;
+        iDeformed = lap2D(currCurve, static_anchor, handle_anchor, offsets);
         deformed{i}(s1 : s2, :) = iDeformed(s1 : s2, :);
     end % curve seg
 end

@@ -62,29 +62,45 @@ end
 %% find feature points
 nCurves = length(curve);
 featIds_noSplit = cell(1, nCurves);
+featfile = 'data/featurePointIds.mat';
 feaIds = cell(1, nCurves);
+loaded = 0;
+if exist(featfile, 'file') == 2
+    load(featfile);
+    loaded = 1;
+    feaIds = featurePointIds;
+end
 figure;
 for i = 1:nCurves
-    feaIds{i} = getSplitCurvePointIds(curve{i});
+    if loaded == 0
+        feaIds{i} = getSplitCurvePointIds(curve{i});
+    end
     npnts = length(curve{i});
     featIds_noSplit{i} = [1, floor((1 + npnts) / 2), npnts];
     % draw
     plot(curve{i}(:,1), curve{i}(:,2), 'k-');
-    hold on
+    hold on;
     % split points
     splitIds = [feaIds{i}(:, 1)', npnts];
     plot(curve{i}(splitIds,1), curve{i}(splitIds,2), 'r--o', 'LineWidth',2);
-    hold on
+    hold on;
+    for j = 1:length(splitIds)
+        text(curve{i}(splitIds(j), 1), curve{i}(splitIds(j), 2), num2str(splitIds(j)));
+        hold on;
+    end
 end
 legend('original polyline', 'simplified');
 
 while area_overlap > thr
     %tic;
     %curve = deformCurve_force(curve, T_P);
-    if (length(curve{i}) > 0.1) 
+    area_overlap
+    if area_overlap > 0.005 
         curve = deformCurve_lap(curve, T_P, featIds_noSplit, 1);
-    else
+    elseif area_overlap > 0.001 
         curve = deformCurve_lap(curve, T_P, feaIds, 0);
+    else
+        curve = deformCurve_force(curve, T_P);
     end
     %toc
     [~,~,area_overlap] = compute_gap_overlap_area(curve, T_P);
