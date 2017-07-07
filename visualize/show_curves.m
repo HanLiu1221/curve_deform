@@ -1,6 +1,6 @@
 %% -----copyRight(c) Shuhua Li<sue142857@gmail.com> 06.15.2017-----%
 % -function: show correspondences btw inside curves and outside curves
-function show_curves(curves,tran_curves,varargin)
+function show_curves(curves,tran_curves,toHold,varargin)
 
 curves1 = curves;
 tran_curves1 = tran_curves;
@@ -89,7 +89,12 @@ for i = 1:n
 end
 % legend1 = legend(h,Leg);clear Leg; 
 % set(legend1,'Location','northeast');
-axis equal;axis off;hold off;
+axis equal;axis off;
+if toHold == 1
+    hold on;
+else
+    hold off;
+end
 
 %% the second subplot
 ax{2} = subplot(1,2,2); h = zeros(n,1); Leg = cell(n,1);
@@ -163,12 +168,21 @@ for i = 1:n
 end
 % legend1 = legend(h,Leg);clear Leg; 
 % set(legend1,'Location','northeast');
-axis equal;axis off;hold off;
+axis equal;axis off;
+if toHold == 1
+    hold on;
+else
+    hold off;
+end
 %%
 linkaxes([ax{1},ax{2}],'xy');
 ax{2}.XLim = [xMin,xMax];
 ax{2}.YLim = [yMin,yMax];
 
 set(gcf,'color','w');
-hold off;
+if toHold == 1
+    hold on;
+else
+    hold off;
+end
 

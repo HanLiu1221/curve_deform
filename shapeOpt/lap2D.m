@@ -89,17 +89,17 @@ end;
 
 % displaying the curve: static anchors are in black, the handle to be moved
 % in red.
-figure;
-plot(curve(:,1),curve(:,2),'b-',...
-     curve(static_anchors,1),curve(static_anchors,2),'*k',...
-     curve(handle_anchors,1),curve(handle_anchors,2),'*r');
-axis equal;
+% figure;
+% plot(curve(:,1),curve(:,2),'b-',...
+%      curve(static_anchors,1),curve(static_anchors,2),'*k',...
+%      curve(handle_anchors,1),curve(handle_anchors,2),'*r');
+% axis equal;
 
 % moving the handle
 handles = curve(handle_anchors, :);
 new_handles = handles + offset;
-%[x_input y_input] = new_handles;
-x_input = new_handles(1);
+%[x_input y_input] = ginput(1);
+x_input = new_handles(1); 
 y_input = new_handles(2);
 lenr = length(rhs);
 rhs((lenr-1):lenr) = [x_input y_input]';
@@ -117,14 +117,14 @@ end
 curve_col = A_prime\rhs;
 defCurv = [curve_col(1:n) curve_col((n+1):(2*n))];
 
-figure;
-plot(curve(:,1),curve(:,2),'g-',...
-     defCurv(:,1),defCurv(:,2),'-b',...
-     defCurv(anchors,1),defCurv(anchors,2),'*k',...
-     anch_pos(:,1),anch_pos(:,2), 'mo',...
-     defCurv(anchors(length(anchors)),1),defCurv(anchors(length(anchors)),2),'*r');
-axis equal;
-title('Editing result');
+% figure;
+% plot(curve(:,1),curve(:,2),'g-',...
+%      defCurv(:,1),defCurv(:,2),'-b',...
+%      defCurv(anchors,1),defCurv(anchors,2),'*k',...
+%      anch_pos(:,1),anch_pos(:,2), 'mo',...
+%      defCurv(anchors(length(anchors)),1),defCurv(anchors(length(anchors)),2),'*r');
+% axis equal;
+% title('Editing result');
 
 end 
 

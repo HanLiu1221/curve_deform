@@ -75,7 +75,8 @@ if nargin == 0
     return
 end
 
-error(nargchk(2, 2, nargin))
+% error(nargchk(2, 2, nargin))
+narginchk(2, 2);
 
 % error checking
 if ~isscalar(tol) || tol<0;

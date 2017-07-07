@@ -5,15 +5,16 @@ nCurves = length(curve);
 
 %% find feature points
 feaIds = cell(1, nCurves);
+nthr = 6;
 figure;
 for i = 1:nCurves
-    simp = dpsimplify(curve{i}, 0.02);
-    pids = findPointIndices(curve{i}, simp);
-    feaIds{i} = pids;
+    feaIds{i} = getSplitCurvePointIds(curve{i});
     % draw
     plot(curve{i}(:,1), curve{i}(:,2), 'k-');
     hold on
-    plot(simp(:,1), simp(:,2), 'r--o', 'LineWidth',2);
+    % split points
+    splitIds = [feaIds{i}(:, 1)', length(curve{i})];
+    plot(curve{i}(splitIds,1), curve{i}(splitIds,2), 'r--o', 'LineWidth',2);
     hold on
 end
 legend('original polyline', 'simplified');
@@ -29,15 +30,21 @@ for i = 1 : length(Trunk)
 end
 
 %% compute offset
-R0 = 0.1;
-thr = 0.01;
-nthr = 10;
-n2static = 2;
+R0 = 0.08;
+thr = 0.001;
+
+n2static = 3;
 % analyze each curve
 deformed = cell(1, nCurves);
 for i = 1 : nCurves
-    nseg = length(feaIds{i}) - 1;
+    nseg = size(feaIds{i}, 1);
     deformed{i} = curve{i};
+    % make a closed curve for lap neighboring
+    npnts = size(curve{i}, 1);
+    iline = samplePntsOnLine(curve{i}(npnts, :), curve{i}(1, :), npnts);
+    %closedCurve = [curve{i}; iline];
+    closedCurve = curve{i};
+    %closedCurve = [curve{i}; curve{i}(1, :)];
     % for each curve segment
     for s = 1 : nseg
         activePids = feaIds{i}(s) : feaIds{i}(s + 1);
@@ -90,23 +97,21 @@ for i = 1 : nCurves
         handle_anchor(1) = handleId;
         offsets = zeros(nh, 2);
         offsets(1, :) = offset;
-        iDeformed = lap2D(curve{i}, static_anchor, handle_anchor, offsets);
+        iDeformed = lap2D(closedCurve, static_anchor, handle_anchor, offsets);
         deformed{i}(s1 : s2, :) = iDeformed(s1 : s2, :);
     end % curve seg
 end
 
 end
 
-function ids = findPointIndices(curve, poly) 
-ids = ones(size(poly, 1), 1);
-for i = 1 : size(poly, 1)
-    mind = 100000;
-    for j = 1 : size(curve, 1)
-        d = norm(curve(j, :) - poly(i, :));
-        if d < mind
-            mind = d;
-            ids(i) = j;
-        end
-    end
+
+
+function pnts = samplePntsOnLine(s, e, n_sample)
+pnts = zeros(n_sample, 2);
+d = norm(e - s);
+dir = (e - s) / d;
+unit = d / (n_sample - 1);
+for i = 1 : n_sample
+    pnts(i, :) = s + (i - 1) * unit * dir;
 end
 end
