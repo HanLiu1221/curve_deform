@@ -1,7 +1,12 @@
-function deformed = deformCurve_lap(curve, Trunk, feaIds, mode)
+function deformed = deformCurve_lap_simu(curves, Trunk, feaIds, mode)
+%%
+% mode:
+% 0 - eliminate overlaps
+% 1 - eliminate gaps
+% 2 - translate only
 
 % n pieces of curves
-nCurves = length(curve);
+nCurves = length(curves);
 maxd = 0;
 for i = 1 : length(Trunk)
     for j = 1 : length(Trunk)
@@ -13,16 +18,29 @@ for i = 1 : length(Trunk)
 end
 
 %% compute offset
-R0 = 0.08;
-thr = 0.001;
 nthr = 6;
-n2static = 3;
+n2static = 2;
 % analyze each curve
 deformed = cell(1, nCurves);
+nh = 1;
+handle_anchor = zeros(1, nh);
+offsets = zeros(nh, 2);
+% simplified polygon to check overlap
+polys = cell(1, nCurves);
+
+if mode == 0
+    d_sample = 0.02;
+    for i = 1 : nCurves
+    polys{i} = dpsimplify(curves{i}, 0.02);
+    end
+end
+if mode == 2
+    polys = curves;
+end
+
 for i = 1 : nCurves
     nseg = size(feaIds{i}, 1);
-    deformed{i} = curve{i};
-    currCurve = curve{i};
+    deformed{i} = curves{i};
     % for each curve segment
     for s = 1 : nseg
         activePids = feaIds{i}(s, 1) : feaIds{i}(s, 3);
@@ -38,7 +56,7 @@ for i = 1 : nCurves
             static_anchor(k + n2static) = activePids(length(activePids) - n2static + k);
         end
         % points to compute
-        ipoints = curve{i}(s1 : s2, :);
+        ipoints = curves{i}(s1 : s2, :);
         max_off_s = 0;
         max_offset_s = [0, 0];
         max_handleId = floor((s1 + s2)/2);
@@ -51,37 +69,56 @@ for i = 1 : nCurves
                 if i == j
                     continue;
                 end
-                jpoints = curve{j};
+                jpoints = curves{j};
                 for jp = 1 : size(jpoints, 1)
                     pj = jpoints(jp, :);
                     d = norm(pj - pi);
                     dir = (pj - pi) / d;
                     if d < min_dij
-                        min_dij = d;
-                        min_offset_ij = d / 2 * dir;
+                        % check if it is overlap or gap
+                        md = 1;
+                        if mode ~= 1
+                            in = inpolygon(pi(1), pi(2), polys{j}(:, 1), polys{j}(:, 2));
+                            md = in;
+                        end
+                        if md ~= 0
+                            min_dij = d;
+                            if mode == 2
+                                min_offset_ij = d * dir;
+                            else 
+                                min_offset_ij = d / 2 * dir;
+                            end
+                        end
                     end
                 end
             end % j curve
-            if min_dij > max_off_s
+            if min_dij ~= intmax('int64') && min_dij > max_off_s
                 max_off_s = min_dij;
                 max_offset_s = min_offset_ij;
                 max_handleId = feaIds{i}(s, 1) + ip - 1;
             end
         end % point ip at i curve s segment
-        % deform
-        nh = 1;
-        handle_anchor = zeros(1, nh);
-        offsets = zeros(nh, 2);
-        handle_anchor(1) = max_handleId;   
-        offsets(1, :) = max_offset_s;
-        iDeformed = lap2D(currCurve, static_anchor, handle_anchor, offsets);
-        deformed{i}(s1 : s2, :) = iDeformed(s1 : s2, :);
+        % deform     
+        if max_off_s ~= 0
+            handle_anchor(1) = max_handleId;   
+            offsets(1, :) = max_offset_s;
+            if mode == 0 || mode == 1
+                iDeformed = lap2D(curves{i}, static_anchor, handle_anchor, offsets);
+            else
+                iDeformed = translateCurve(curves{i}, max_offset_s);
+            end
+            deformed{i}(s1 : s2, :) = iDeformed(s1 : s2, :);
+        end
     end % curve seg
 end
-
 end
 
-
+function deformed = translateCurve(curve, offset)
+deformed = zeros(size(curve));
+for i = 1 : length(curve)
+    deformed(i, :) = curve(i, :) + offset;
+end
+end
 
 function pnts = samplePntsOnLine(s, e, n_sample)
 pnts = zeros(n_sample, 2);

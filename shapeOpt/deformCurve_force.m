@@ -1,4 +1,4 @@
-function curve = deformCurve_force(curve, Trunk, weights)
+function curve = deformCurve_force(curve, Trunk)
 
 % n pieces of curves
 nPs = length(curve);
@@ -15,8 +15,8 @@ points = zeros(n2, 1);
 T = zeros(n2, n2); 
 
 % weights
-w_lap = 0.2; % laplacian smoothing
-w_ar = 0.8; % attraction-repulsion
+w_lap = 0.1; % laplacian smoothing
+w_ar = 0.9; % attraction-repulsion
 w_mot = 0.2; % brownian motion
 
 %% Laplacian force & labeling
