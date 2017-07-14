@@ -1,12 +1,19 @@
-function [deformed, area_gap, area_overlap] =  eliminate_gaps(curves, Trunk)
+function [deformed, area_gap, area_overlap] =  eliminate_gaps(curves, Trunk, overlap_thr)
+%% detect any curve segments that are along a gap region
+%  
 
+nCurves = length(curves);
 deformed = cell(1, nCurves);
-iter = 0;
-ratio = 1.0;
-ori_gap = area_gap;
+nh = 1;
+handle_anchor = zeros(1, nh);
+offsets = zeros(nh, 2);
+iter = 1;
 max_iter = 5;
+n2static = 2;
 dist_threshold = 0.01;
 min_num_points_in_seg = 10;
+[~, area_gap, area_overlap] = compute_gap_overlap_area(curves, Trunk);
+ori_gap = area_gap;
 while iter < max_iter % change offset length
     % 1. find curve intersection point to split the curve
     segIds = findCurveSegmentIds(curves, dist_threshold, min_num_points_in_seg);
@@ -15,7 +22,23 @@ while iter < max_iter % change offset length
         deformed{i} = curves{i};
         % for each curve segment
         for s = 1 : nseg
-            activePids = segIds{i}(s) : segIds{i}(s + 1);
+            % take the previous and post points as static anchor
+            st = segIds{i}(s);
+            ed = segIds{i}(s + 1);
+%             if st - n2static > 0
+%                 st = st - n2static
+%             else 
+%                 st = 1;
+%             end
+%             if ed + n2static < length(curves{i})
+%                 ed = ed + n2static;
+%             else 
+%                 ed = length(curves{i}) - 1;
+%             end
+            activePids = st : ed;
+            if length(activePids) < n2static * 3
+                continue;
+            end
             % jump end points
             s1 = activePids(1) + n2static;
             s2 = activePids(length(activePids) - n2static);
@@ -60,7 +83,7 @@ while iter < max_iter % change offset length
             % deform     
             if max_off_s ~= 0
                 handle_anchor(1) = max_handleId;   
-                offsets(1, :) = max_offset_s * ratio;
+                offsets(1, :) = max_offset_s;
                 prevCurve = curves{i};
                 curves{i}(activePids, :) = lap2D(sCurve, static_anchor, handle_anchor, offsets);
                 [~, cur_gap, cur_overlap] = compute_gap_overlap_area(curves, Trunk);
@@ -127,10 +150,17 @@ for i = 1 : n
             tmp(id) = segs(p);
         end
     end
-    if length(curves{i}) - tmp(id) > min_num_points_in_seg
+    if length(curves{i}) - min_num_points_in_seg - tmp(id) > min_num_points_in_seg
         id = id + 1;
         tmp(id) = length(curves{i}) - min_num_points_in_seg;
     end
     segIds{i} = tmp(1, 1 : id);
+end
+end
+
+function deformed = translateCurve(curve, offset)
+deformed = zeros(size(curve));
+for i = 1 : length(curve)
+    deformed(i, :) = curve(i, :) + offset;
 end
 end

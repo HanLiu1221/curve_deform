@@ -1,4 +1,4 @@
-function [deformed, area_gap, area_overlap] = deformCurve_lap_gap(curves, Trunk, feaIds)
+function [deformed, area_gap, area_overlap] = deformCurve_lap_gap(curves, Trunk, feaIds, overlap_thr)
 %%
 
 % n pieces of curves
@@ -75,11 +75,6 @@ while iter < max_iter % change offset length
                 prevCurve = curves{i};
                 curves{i} = lap2D(curves{i}, static_anchor, handle_anchor, offsets);
                 [~, cur_gap, cur_overlap] = compute_gap_overlap_area(curves, Trunk);
-%                 if cur_overlap > overlap_thr || cur_gap >= area_gap
-%                     curves{i} = prevCurve;
-%                     curves{i} = translateCurve(curves{i}, max_offset_s);
-%                     [~, cur_gap, cur_overlap] = compute_gap_overlap_area(curves, Trunk);
-%                 end
                 if cur_overlap > overlap_thr || cur_gap >= area_gap
                     curves{i} = prevCurve; %unchanged
                 else
@@ -93,12 +88,5 @@ while iter < max_iter % change offset length
     end
     iter = iter + 1;
     ratio = ratio * 0.8;
-end
-end
-
-function deformed = translateCurve(curve, offset)
-deformed = zeros(size(curve));
-for i = 1 : length(curve)
-    deformed(i, :) = curve(i, :) + offset;
 end
 end
