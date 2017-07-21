@@ -14,24 +14,31 @@ clear;
 addpath(genpath('./'));
 
 %% load curves
-load('./input/curves4deform_noGap.mat');
-for id = 1 : length(curves4deform)
-    P = curves4deform(id).curves1; % P
-    Q = curves4deform(id).curves2; % Q
+for id = 1 : 6
+    %% 1. get the original RIOT
+    dataFolder = strcat('./input/riot_', num2str(id), '/');
+    if ~exist(dataFolder)
+        continue;
+    end
+    load(strcat(dataFolder, 'curves4deform_texture.mat'));
+    P = curves4deform_texture.curves1;
+    Q = curves4deform_texture.curves2;
+    
+%     P = curves4deform(id).curves1; % P
+%     Q = curves4deform(id).curves2; % Q
 
-    % 1. get trunks
     T_P = get_candidate_trunk(P); % T_P
     T_Q = get_candidate_trunk(Q); % T_Q
 
-    % 2. get the transform
     scale = 0;
     tran_P = transform_curves(P, T_Q, scale);
     tran_Q = transform_curves(Q, T_P, scale);
 
     show_curves(P, tran_P, 0, Q, tran_Q);
-    %show_curves(P, tran_P, 0);
     
-    folder = strcat('shapeOpt/output/example_', num2str(id), '/');
+    %% 2. file paths
+    folder = strcat('shapeOpt/output/texture/example_', num2str(id), '/');
+    
     if ~exist(folder)
         mkdir(folder);
     else
@@ -53,8 +60,153 @@ for id = 1 : length(curves4deform)
         delete(strcat(qfolder, '*.png'));
     end
     
-    % 3. boundary curve optimization
-    optimizeBoundaryCurve(P, T_P, T_Q, scale, pfolder, 0);
-    optimizeBoundaryCurve(Q, T_Q, T_P, scale, qfolder, 1);
+    %% 3. prepare data
+    % 3.1. sample points on the boundary curve
+    P = sampleControPoints(P);
+    Q = sampleControPoints(Q);
+    show_curves(P, tran_P, 0, Q, tran_Q);
+    sample_points_file = strcat(folder, 'riot_', num2str(id), '_sp.png');
+    saveas(gcf, sample_points_file);    
+   
+    %% 4. texture 
+    p_path = strcat(dataFolder,  '1_p.tif');
+    q_path = strcat(dataFolder,  '1_q.tif');
+    p_image = imread(p_path);
+    q_image = imread(q_path);
+    S_p = [curves4deform_texture.scale1_x, curves4deform_texture.scale1_y];
+    T_p = [curves4deform_texture.trans1_x, curves4deform_texture.trans1_y];
+    S_q = [curves4deform_texture.scale2_x, curves4deform_texture.scale2_y];
+    T_q = [curves4deform_texture.trans2_x, curves4deform_texture.trans2_y];
+    %[Sp, Tp] = estimateTrans(pnts, [size(q_image, 1), size(q_image, 2)] * 1.0);
+    tex_file_p = strcat(folder, 'ori_tex_p_', num2str(id), '.png');
+    tex_file_q = strcat(folder, 'ori_tex_q_', num2str(id), '.png');
+    [FP, VP, TVP, pnts_P] = computeTexture(tran_P, S_p, T_p);
+    drawTexture(p_image, FP, VP, TVP, tex_file_p);
+    [FQ, VQ, TVQ, pnts_Q] = computeTexture(tran_Q, S_q, T_q);
+    drawTexture(q_image, FQ, VQ, TVQ, tex_file_q);
+    %set(h, 'CData', p_image, 'FaceColor','texturemap');
+    
+    %% 5. boundary curve optimization
+    [P_o, P_g] = optimizeBoundaryCurve(P, T_P, T_Q, pfolder, 0);
+    [Q_o, Q_g]  = optimizeBoundaryCurve(Q, T_Q, T_P, qfolder, 1);
+    overlap_file = strcat(folder, 'riot_', num2str(id), '_no_overlap', '.png');
+    drawARiot(P_o, Q_o, T_P, T_Q, overlap_file);
+    gap_file = strcat(folder, 'riot_', num2str(id), '_min_gap', '.png');
+    drawARiot(P_g, Q_g, T_P, T_Q, gap_file);
+    
+    % after overlap
+    tran_P_o = transform_curves(P_o, T_Q, scale);
+    tran_Q_o = transform_curves(Q_o, T_P, scale);
+    show_curves(P_o, tran_P_o, 0, Q_o, tran_Q_o);
+    tex_file_p_o = strcat(folder, 'overlap_tex_p_', num2str(id), '.png');
+    tex_file_q_o = strcat(folder, 'overlap_tex_q_', num2str(id), '.png');
+    [FPO, VPO, TVPO] = computeTexture(tran_P_o, S_p, T_p);
+    drawTexture(p_image, FPO, VPO, TVPO, tex_file_p_o);
+    [FQO, VQO, TVQO] = computeTexture(tran_Q_o, S_q, T_q);
+    drawTexture(q_image, FQO, VQO, TVQO, tex_file_q_o);
+    
+    % after overlap
+    tran_P_g = transform_curves(P_g, T_Q, scale);
+    tran_Q_g = transform_curves(Q_g, T_P, scale);
+    show_curves(P_g, tran_P_g, 0, Q_g, tran_Q_g);
+    tex_file_p_g = strcat(folder, 'gap_tex_p_', num2str(id), '.png');
+    tex_file_q_g = strcat(folder, 'gap_tex_q_', num2str(id), '.png');
+    [FPG, VPG, TVPG] = computeTexture(tran_P_o, S_p, T_p);
+    drawTexture(p_image, FPG, VPG, TVPG, tex_file_p_g);
+    [FQG, VQG, TVQG] = computeTexture(tran_Q_o, S_q, T_q);
+    drawTexture(q_image, FQG, VQG, TVQG, tex_file_q_o);
+    
+end
+end
+
+function VM = findApproximateMap(V)
+
+end
+
+function [FF, VV, TV, pnts] = computeTexture(tran_P, S, T)
+    %% 4. Texture test
+    npnt = 0;
+    for i = 1 : length(tran_P)
+        npnt = npnt + length(tran_P{i});
+    end
+    pnts = zeros(npnt, 2);
+    bbox = zeros(2, 2);
+    idx = 1;
+    for i = 1 : length(tran_P)
+        for j = 1 : length(tran_P{i})
+            pnts(idx, :) = tran_P{i}(j, :);
+            bbox(1, 1) = min(bbox(1, 1), pnts(idx, 1));
+            bbox(1, 2) = min(bbox(1, 2), pnts(idx, 2));
+            bbox(2, 1) = max(bbox(2, 1), pnts(idx, 1));
+            bbox(2, 2) = max(bbox(2, 2), pnts(idx, 2));
+            idx = idx + 1;
+        end
+    end
+%     idx = 1;
+%     for i = 1 : length(tran_P)
+%         pnts(idx : idx + length(tran_P{i}) - 1, :) = tran_P{i};
+%         idx = idx + length(tran_P{i});
+%     end
+
+    % 4.1 triangulation
+    % VV: n * 2 vertices
+    % FF: nf * 3 faces
+    figure;
+    [VV, FF, h] = distmesh2d(@dpoly, @huniform, 0.1, bbox, pnts, pnts);
+%     tri = delaunayTriangulation(pc);
+%     figure;
+%     triplot(tri, pc(:, 1), pc(:, 2));
+
+    TV = zeros(size(VV)); %texture coordinate
+%     maxp = max([pnts(:, 1), pnts(:,2)]) * 1.0;
+%     minp = min([pnts(:, 1), pnts(:,2)]) * 1.0;
+%     imgSize = [size(q_image, 1), size(q_image, 2)] * 1.0;
+    for i = 1 : length(TV)
+        pos = VV(i, :);
+        TV(i, :) = mapTextureCoord(pos, S, T);
+        %TV(i, :) = [TV(i, 1), imgSize(2) - TV(i, 2)];
+        TV(i, :) = [TV(i, 2), TV(i, 1)];
+        %TV(i, :) = TV(i, :) ./ imgSize;
+    end
+end
+
+function drawTexture(p_image, FF, VV, TV, tex_file_p)
+figure;
+    imshow(p_image); hold on;
+    plot(TV(:, 1), TV(:, 2), 'b.');
+    axis equal;
+    figure;
+    nv = length(VV);
+    V = [VV zeros(nv,1)];
+    patcht(FF, V, FF, TV, p_image);
+    axis equal; axis off;
+    saveas(gcf, tex_file_p);
+end
+
+function tp = mapTextureCoord(p, S, T)
+tp = p.*S + T;
+end
+
+function [S, T] = estimateTrans(pnts, imSize)
+maxp = max([pnts(:, 1), pnts(:,2)]) * 1.0;
+minp = min([pnts(:, 1), pnts(:,2)]) * 1.0;
+S = imSize / (maxp - minp);
+T = imSize / 2 - (maxp + minp) / 2;
+end
+
+function drawARiot(P, Q, T_P, T_Q, filename)
+figure;
+tran_P = transform_curves(P, T_Q, 0);
+tran_Q = transform_curves(Q, T_P, 0);
+show_curves(P, tran_P, 0, Q, tran_Q);
+saveas(gcf, filename);
+end
+
+function cP = sampleControPoints(P)
+n = length(P);
+d_sample = 0.04;
+cP = cell(n,1);
+for i = 1 : n
+    [cP{i}, ~] = extract_control_points(P{i}, d_sample);   
 end
 end

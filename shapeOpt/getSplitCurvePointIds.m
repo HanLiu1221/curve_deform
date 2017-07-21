@@ -1,8 +1,9 @@
 %% split a curve into a few curve segments for deformation
-function splitPointIds = getSplitCurvePointIds(curve, shouldReverse)
+function [splitPointIds, handleIds] = getSplitCurvePointIds(curve, shouldReverse)
 %% OUTPUT 
 % [s1, handle, e2; ...]
 % simplify the polygon
+n = length(curve);
 d = 0.01;
 simp_poly = dpsimplify(curve, d);
 [angles, types] = compute_curvature_poly(simp_poly);
@@ -31,6 +32,7 @@ for i = 1:length(sids)
 end
 % curvature(pids(1, 1 :j - 1))
 splitPointIds = zeros(j, 3);
+handleIds = zeros(1, 0);
 for i = 1 : j
     if i == 1
         splitPointIds(i, 1) = 1;
@@ -48,6 +50,44 @@ for i = 1 : j
 %     [m, id] = max(curvs);
     id = floor((splitPointIds(i, 1) + splitPointIds(i, 3)) / 2);
     splitPointIds(i, 2) = splitPointIds(i, 1) + id - 1;
+end
+if size(splitPointIds, 1) >= 2
+    return;
+end
+% check if it can be split into two lines
+% find the contex point, i.e., the highest point
+% check the projection length from the point to the line formed by two
+% end points
+prev = 1;
+post = n;
+hIds = zeros(1, length(simp_poly));
+hid = 0;
+thr = 0.05;
+for i = 1:length(simp_poly)
+    pid = i;
+    cid = sids(i);
+    if types(pid) == 1 || cid < nthr || cid > n - nthr
+        continue;
+    end
+    % convex
+    if i + 1 < length(simp_poly)
+        post = sids(i + 1);
+    else 
+        post = n;
+    end
+    % fit two lines
+    [line1, error1] = polyfit(curve(prev : cid, 1), curve(prev : cid, 2), 1);
+    [line2, error2] = polyfit(curve(cid : post, 1), curve(cid : post, 2), 1);
+    prev = cid;
+    if error1.normr < thr && error2.normr < thr
+        hid = hid + 1;
+        hIds(hid) = cid;
+    end
+    disp(strcat('line 1 fit error: ', num2str(error1.normr)));
+    disp(strcat('line 2 fit error: ', num2str(error2.normr)));
+end
+if hid < 3
+    handleIds = hIds(1, 1 : hid);
 end
 end
 

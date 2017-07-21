@@ -4,3 +4,4 @@ refer/
 *.zip
 shapeOpt/linecurvature_version1b/testdata.mat
 shapeOpt/linecurvature_version1b/license.txt
+input/

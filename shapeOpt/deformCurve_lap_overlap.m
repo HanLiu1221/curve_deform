@@ -1,4 +1,4 @@
-function deformed = deformCurve_lap_simu(curves, Trunk, feaIds, mode)
+function deformed = deformCurve_lap_overlap(curves, Trunk, feaIds, mode)
 %%
 % mode:
 % 0 - eliminate overlaps
@@ -79,11 +79,12 @@ for i = 1 : nCurves
                         in = inpolygon(pi(1), pi(2), polys{j}(:, 1), polys{j}(:, 2));
                         if in == 1
                             min_dij = d;
-                            if mode == 2
-                                min_offset_ij = d * dir;
-                            else 
-                                min_offset_ij = d / 2 * dir;
-                            end
+                            min_offset_ij = d / 2 * dir;
+%                             if mode == 2
+%                                 min_offset_ij = d * dir;
+%                             else 
+%                                 min_offset_ij = d / 2 * dir;
+%                             end
                         end
                     end
                 end
@@ -101,8 +102,8 @@ for i = 1 : nCurves
             if mode == 1
                 iDeformed = lap2D(curves{i}, static_anchor, handle_anchor, offsets);
             else
-                s1 = 2;
-                s2 = length(curves{i}) - 1;
+%                 s1 = 2;
+%                 s2 = length(curves{i}) - 1;
                 iDeformed = translateCurve(curves{i}, max_offset_s);
             end
             deformed{i}(s1 : s2, :) = iDeformed(s1 : s2, :);

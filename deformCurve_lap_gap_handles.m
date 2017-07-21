@@ -1,4 +1,4 @@
-function [deformed, area_gap, area_overlap] = deformCurve_lap_gap(curves, Trunk, feaIds, overlap_thr)
+function [deformed, area_gap, area_overlap] = deformCurve_lap_gap_handles(curves, Trunk, feaIds, handleIds, overlap_thr)
 %%
 
 % n pieces of curves
@@ -15,7 +15,6 @@ offsets = zeros(nh, 2);
 deformed = curves;
 %% Iterate over each curve segment
 [~, area_gap, area_overlap] = compute_gap_overlap_area(curves, Trunk);
-overlap_thr = 1e-6;
 iter = 0;
 max_iter = 1;
 ratio = 1.0;
@@ -30,7 +29,7 @@ while iter < max_iter % change offset length
                 continue;
             end
             % jump end points
-            s1 = activePids(1 + n2static);
+            s1 = activePids(1) + n2static;
             s2 = activePids(length(activePids) - n2static);
             static_anchor = zeros(1, n2static * 2);
             for k = 1 : n2static
@@ -68,16 +67,15 @@ while iter < max_iter % change offset length
                     max_handleId = feaIds{i}(s, 1) + ip - 1;
                 end
             end % point ip at i curve s segment
+            handle_anchor(1) = max_handleId; 
+            if length(handleIds{i}) > 0
+            end
             % deform     
             if max_off_s ~= 0
-                handle_anchor(1) = max_handleId;   
                 offsets(1, :) = max_offset_s * ratio;
                 prevCurve = curves{i};
                 curves{i} = lap2D(curves{i}, static_anchor, handle_anchor, offsets);
                 [~, cur_gap, cur_overlap] = compute_gap_overlap_area(curves, Trunk);
-                if cur_overlap > overlap_thr || cur_gap >= area_gap
-                    curves{i}(s1 : s2, :) = translateCurve(curves{i}(s1 : s2, :), offsets(1, :));
-                end
                 if cur_overlap > overlap_thr || cur_gap >= area_gap
                     curves{i} = prevCurve; %unchanged
                 else
@@ -91,12 +89,5 @@ while iter < max_iter % change offset length
     end
     iter = iter + 1;
     ratio = ratio * 0.8;
-end
-end
-
-function deformed = translateCurve(curve, offset)
-deformed = zeros(size(curve));
-for i = 1 : length(curve)
-    deformed(i, :) = curve(i, :) + offset;
 end
 end

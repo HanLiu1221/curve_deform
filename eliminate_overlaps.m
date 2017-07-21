@@ -1,4 +1,4 @@
-function [deformed, area_gap, area_overlap] =  eliminate_gaps(curves, Trunk, overlap_thr)
+function [deformed, area_gap, area_overlap] =  eliminate_overlaps(curves, Trunk, overlap_thr)
 %% detect any curve segments that are along a gap region
 %  
 
@@ -13,7 +13,13 @@ n2static = 2;
 dist_threshold = 0.01;
 min_num_points_in_seg = 10;
 [~, area_gap, area_overlap] = compute_gap_overlap_area(curves, Trunk);
-ori_gap = area_gap;
+ori_overlap = area_overlap;
+% simplified polygon to check overlap
+polys = cell(1, nCurves);
+d_sample = 0.02;
+for i = 1 : nCurves
+    polys{i} = dpsimplify(curves{i}, d_sample);
+end
 while iter < max_iter % change offset length
     % 1. find curve intersection point to split the curve
     segIds = findCurveSegmentIds(curves, dist_threshold, min_num_points_in_seg);
@@ -25,22 +31,12 @@ while iter < max_iter % change offset length
             % take the previous and post points as static anchor
             st = segIds{i}(s);
             ed = segIds{i}(s + 1);
-%             if st - n2static > 0
-%                 st = st - n2static
-%             else 
-%                 st = 1;
-%             end
-%             if ed + n2static < length(curves{i})
-%                 ed = ed + n2static;
-%             else 
-%                 ed = length(curves{i}) - 1;
-%             end
             activePids = st : ed;
-            if length(activePids) < n2static * 3
+            if length(activePids) < min_num_points_in_seg
                 continue;
             end
             % jump end points
-            s1 = activePids(n2static + 1);
+            s1 = activePids(1) + n2static;
             s2 = activePids(length(activePids) - n2static);
             static_anchor = zeros(1, n2static * 2);
             for k = 1 : n2static
@@ -69,8 +65,18 @@ while iter < max_iter % change offset length
                         d = norm(pj - pi);
                         dir = (pj - pi) / d;
                         if d < min_dij
-                            min_dij = d;
-                            min_offset_ij = d / 2 * dir;
+                            inPoly = 0;
+                            if length(polys{i}) > length(polys{j})
+                                inPoly = inpolygon(pi(1), pi(2), ...
+                                    polys{j}(:, 1), polys{j}(:, 2));
+                            else
+                                inPoly = inpolygon(pj(1), pj(2), ...
+                                    polys{i}(:, 1), polys{i}(:, 2));
+                            end
+                            if inPoly == 1
+                                min_dij = d;
+                                min_offset_ij = d / 2 * dir;
+                            end
                         end
                     end
                 end % j curve
@@ -86,28 +92,34 @@ while iter < max_iter % change offset length
                 offsets(1, :) = max_offset_s;
                 prevCurve = curves{i};
                 curves{i}(activePids, :) = lap2D(sCurve, static_anchor, handle_anchor, offsets);
-                [~, cur_gap, cur_overlap] = compute_gap_overlap_area(curves, Trunk);
-                if cur_overlap > overlap_thr || cur_gap >= area_gap
-                    curves{i} = prevCurve;
-                    curves{i}(activePids, :) = translateCurve(sCurve, max_offset_s);
-                    [~, cur_gap, cur_overlap] = compute_gap_overlap_area(curves, Trunk);
-                end
-                if cur_overlap > overlap_thr || cur_gap >= area_gap
+                [~, ~, cur_overlap] = compute_gap_overlap_area(curves, Trunk);
+%                 if cur_overlap >= area_overlap
+%                     curves{i} = prevCurve;
+%                     translated = translateCurve(sCurve, max_offset_s);
+%                     s1 = activePids(2);
+%                     s2 = activePids(length(activePids) - 1);
+%                     curves{i}(s1 : s2, :) = translated(2 : length(translated) - 1, :);
+%                     [~, ~, cur_overlap] = compute_gap_overlap_area(curves, Trunk);
+%                 end
+                if cur_overlap >= area_overlap
                     curves{i} = prevCurve; %unchanged
                 else
                     deformed{i}(s1 : s2, :) = curves{i}(s1 : s2, :);
                     area_overlap = cur_overlap;
-                    area_gap = cur_gap;
                 end
             end
         end % curve seg
     end
-    if area_overlap < overlap_thr && area_gap < ori_gap
+    if area_overlap < ori_overlap
         break;
     end
     iter = iter + 1;
     dist_threshold = dist_threshold / 2;
     min_num_points_in_seg = min_num_points_in_seg * 0.8;
+    d_sample = d_sample / 2;
+    for i = 1 : nCurves
+        polys{i} = dpsimplify(curves{i}, d_sample);
+    end
 end
 end
 
