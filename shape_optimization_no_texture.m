@@ -14,7 +14,8 @@ clear;
 addpath(genpath('./'));
 
 %% load curves
-load('./input/curves4deform_6examples.mat');
+load('./input/curves4deform_noGap.mat');
+%load('./input/curves4deform_6examples.mat');
 for id = 1 : length(curves4deform)
     %% 1. get the original RIOT
     
@@ -31,7 +32,7 @@ for id = 1 : length(curves4deform)
     show_curves(P, tran_P, 0, Q, tran_Q);
     
     %% 2. file paths
-    folder = strcat('shapeOpt/output/6examples/example_', num2str(id), '/');
+    folder = strcat('shapeOpt/output/data_1/example_', num2str(id), '/');
     
     if ~exist(folder)
         mkdir(folder);

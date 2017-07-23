@@ -14,7 +14,8 @@ clear;
 addpath(genpath('./'));
 
 %% load curves
-for id = 1 : 6
+%load('./input/curves4deform_noGap.mat');
+for id = 2 : 6
     %% 1. get the original RIOT
     dataFolder = strcat('./input/riot_', num2str(id), '/');
     if ~exist(dataFolder)
@@ -69,8 +70,8 @@ for id = 1 : 6
     saveas(gcf, sample_points_file);    
    
     %% 4. texture 
-    p_path = strcat(dataFolder,  '1_p.tif');
-    q_path = strcat(dataFolder,  '1_q.tif');
+    p_path = strcat(dataFolder,  'p.tif');
+    q_path = strcat(dataFolder,  'q.tif');
     p_image = imread(p_path);
     q_image = imread(q_path);
     S_p = [curves4deform_texture.scale1_x, curves4deform_texture.scale1_y];
@@ -80,9 +81,11 @@ for id = 1 : 6
     %[Sp, Tp] = estimateTrans(pnts, [size(q_image, 1), size(q_image, 2)] * 1.0);
     tex_file_p = strcat(folder, 'ori_tex_p_', num2str(id), '.png');
     tex_file_q = strcat(folder, 'ori_tex_q_', num2str(id), '.png');
-    [FP, VP, TVP, pnts_P] = computeTexture(tran_P, S_p, T_p);
+    mesh_file_p = strcat(folder, 'ori_mesh_p_', num2str(id), '.png');
+    mesh_file_q = strcat(folder, 'ori_mesh_q_', num2str(id), '.png');
+    [FP, VP, TVP, pnts_P] = computeTexture(tran_P, S_p, T_p, mesh_file_p);
     drawTexture(p_image, FP, VP, TVP, tex_file_p);
-    [FQ, VQ, TVQ, pnts_Q] = computeTexture(tran_Q, S_q, T_q);
+    [FQ, VQ, TVQ, pnts_Q] = computeTexture(tran_Q, S_q, T_q, mesh_file_q);
     drawTexture(q_image, FQ, VQ, TVQ, tex_file_q);
     %set(h, 'CData', p_image, 'FaceColor','texturemap');
     
@@ -100,9 +103,11 @@ for id = 1 : 6
     show_curves(P_o, tran_P_o, 0, Q_o, tran_Q_o);
     tex_file_p_o = strcat(folder, 'overlap_tex_p_', num2str(id), '.png');
     tex_file_q_o = strcat(folder, 'overlap_tex_q_', num2str(id), '.png');
-    [FPO, VPO, TVPO] = computeTexture(tran_P_o, S_p, T_p);
+    mesh_file_p_o = strcat(folder, 'overlap_mesh_p_', num2str(id), '.png');
+    mesh_file_q_o = strcat(folder, 'overlap_mesh_q_', num2str(id), '.png');
+    [FPO, VPO, TVPO] = computeTexture(tran_P_o, S_p, T_p, mesh_file_p_o);
     drawTexture(p_image, FPO, VPO, TVPO, tex_file_p_o);
-    [FQO, VQO, TVQO] = computeTexture(tran_Q_o, S_q, T_q);
+    [FQO, VQO, TVQO] = computeTexture(tran_Q_o, S_q, T_q, mesh_file_q_o);
     drawTexture(q_image, FQO, VQO, TVQO, tex_file_q_o);
     
     % after overlap
@@ -111,10 +116,12 @@ for id = 1 : 6
     show_curves(P_g, tran_P_g, 0, Q_g, tran_Q_g);
     tex_file_p_g = strcat(folder, 'gap_tex_p_', num2str(id), '.png');
     tex_file_q_g = strcat(folder, 'gap_tex_q_', num2str(id), '.png');
-    [FPG, VPG, TVPG] = computeTexture(tran_P_o, S_p, T_p);
+    mesh_file_p_g = strcat(folder, 'gap_mesh_p_', num2str(id), '.png');
+    mesh_file_q_g = strcat(folder, 'gap_mesh_q_', num2str(id), '.png');
+    [FPG, VPG, TVPG] = computeTexture(tran_P_o, S_p, T_p, mesh_file_p_g);
     drawTexture(p_image, FPG, VPG, TVPG, tex_file_p_g);
-    [FQG, VQG, TVQG] = computeTexture(tran_Q_o, S_q, T_q);
-    drawTexture(q_image, FQG, VQG, TVQG, tex_file_q_o);
+    [FQG, VQG, TVQG] = computeTexture(tran_Q_o, S_q, T_q, mesh_file_q_g);
+    drawTexture(q_image, FQG, VQG, TVQG, tex_file_q_g);
     
 end
 end
@@ -123,7 +130,7 @@ function VM = findApproximateMap(V)
 
 end
 
-function [FF, VV, TV, pnts] = computeTexture(tran_P, S, T)
+function [FF, VV, TV, pnts] = computeTexture(tran_P, S, T, mesh_file_p)
     %% 4. Texture test
     npnt = 0;
     for i = 1 : length(tran_P)
@@ -153,6 +160,8 @@ function [FF, VV, TV, pnts] = computeTexture(tran_P, S, T)
     % FF: nf * 3 faces
     figure;
     [VV, FF, h] = distmesh2d(@dpoly, @huniform, 0.1, bbox, pnts, pnts);
+    axis equal;
+    saveas(gcf, mesh_file_p);
 %     tri = delaunayTriangulation(pc);
 %     figure;
 %     triplot(tri, pc(:, 1), pc(:, 2));
@@ -171,16 +180,16 @@ function [FF, VV, TV, pnts] = computeTexture(tran_P, S, T)
 end
 
 function drawTexture(p_image, FF, VV, TV, tex_file_p)
-figure;
-    imshow(p_image); hold on;
-    plot(TV(:, 1), TV(:, 2), 'b.');
-    axis equal;
+%     figure;
+%     imshow(p_image); hold on;
+%     plot(TV(:, 1), TV(:, 2), 'b.');
+%     axis equal;
     figure;
     nv = length(VV);
     V = [VV zeros(nv,1)];
     patcht(FF, V, FF, TV, p_image);
-    axis equal; axis off;
-    saveas(gcf, tex_file_p);
+    axis equal; %axis off;
+    saveas(gcf, tex_file_p, 'png');
 end
 
 function tp = mapTextureCoord(p, S, T)

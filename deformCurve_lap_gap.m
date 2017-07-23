@@ -5,20 +5,16 @@ function [deformed, area_gap, area_overlap] = deformCurve_lap_gap(curves, Trunk,
 nCurves = length(curves);
 
 %% compute offset
-nthr = 6;
 n2static = 2;
 % analyze each curve
-deformed = cell(1, nCurves);
 nh = 1;
 handle_anchor = zeros(1, nh);
 offsets = zeros(nh, 2);
 deformed = curves;
 %% Iterate over each curve segment
 [~, area_gap, area_overlap] = compute_gap_overlap_area(curves, Trunk);
-overlap_thr = 1e-6;
 iter = 0;
 max_iter = 1;
-ratio = 1.0;
 while iter < max_iter % change offset length
     for i = 1 : nCurves
         nseg = size(feaIds{i}, 1);
@@ -26,7 +22,7 @@ while iter < max_iter % change offset length
         % for each curve segment
         for s = 1 : nseg
             activePids = feaIds{i}(s, 1) : feaIds{i}(s, 3);
-            if length(activePids) < nthr
+            if length(activePids) <= n2static * 2
                 continue;
             end
             % jump end points
@@ -65,13 +61,13 @@ while iter < max_iter % change offset length
                 if min_dij ~= intmax('int64') && min_dij > max_off_s
                     max_off_s = min_dij;
                     max_offset_s = min_offset_ij;
-                    max_handleId = feaIds{i}(s, 1) + ip - 1;
+                    max_handleId = s1 + ip - 1;
                 end
             end % point ip at i curve s segment
             % deform     
             if max_off_s ~= 0
                 handle_anchor(1) = max_handleId;   
-                offsets(1, :) = max_offset_s * ratio;
+                offsets(1, :) = max_offset_s;
                 prevCurve = curves{i};
                 curves{i} = lap2D(curves{i}, static_anchor, handle_anchor, offsets);
                 [~, cur_gap, cur_overlap] = compute_gap_overlap_area(curves, Trunk);
@@ -90,13 +86,5 @@ while iter < max_iter % change offset length
         end % curve seg
     end
     iter = iter + 1;
-    ratio = ratio * 0.8;
-end
-end
-
-function deformed = translateCurve(curve, offset)
-deformed = zeros(size(curve));
-for i = 1 : length(curve)
-    deformed(i, :) = curve(i, :) + offset;
 end
 end
