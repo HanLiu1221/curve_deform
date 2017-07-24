@@ -35,7 +35,7 @@ while iter < max_iter % change offset length
             st = segIds{i}(s);
             ed = segIds{i}(s + 1);
             activePids = st : ed;
-            if length(activePids) < n2static * 2
+            if length(activePids) < min_num_points_in_seg %n2static * 2
                 continue;
             end
             % jump end points

@@ -19,7 +19,7 @@ end
 
 %% compute offset
 n2static = 2;
-min_dist_thr = 0.2;
+min_dist_thr = 0.5;
 % analyze each curve
 deformed = cell(1, nCurves);
 nh = 1;
@@ -56,13 +56,14 @@ for i = 1 : nCurves
         end
         % points to compute
         ipoints = curves{i}(s1 : s2, :);
-        max_off_s = 0;
-        max_offset_s = [0, 0];
+        max_off_val = 0;
+        max_off_dir = [0, 0];
         max_handleId = floor((s1 + s2)/2);
         for ip = 1 : size(ipoints, 1)
             pi = ipoints(ip, :);
             % find nearest neighboring point
             min_dij = min_dist_thr;
+            min_dir = [0, 0];
             min_offset_ij = [0, 0];
             for j = 1 : nCurves
                 if i == j
@@ -78,34 +79,64 @@ for i = 1 : nCurves
                         inPoly = inpolygon(pi(1), pi(2), ...
                                     polys{j}(:, 1), polys{j}(:, 2));
                         if inPoly == 1
-                            min_dij = d;
-%                             min_offset_ij = d / 2 * dir;
+                            min_dir = dir;
                             if mode == 2
-                                min_offset_ij = d * dir;
+                                min_dij = d / 2;
                             else 
-                                min_offset_ij = d / 2 * dir;
+                                min_dij = d / 2;
                             end
                         end
                     end
                 end
-            end % j curve
-            if min_dij ~= min_dist_thr && min_dij > max_off_s
-                max_off_s = min_dij;
-                max_offset_s = min_offset_ij;
+            end % all j curve
+            if min_dij ~= min_dist_thr && min_dij > max_off_val
+                max_off_val = min_dij;
+                max_off_dir = min_dir;
                 max_handleId = s1 + ip - 1;
             end
         end % point ip at i curve s segment
-        % laplacian deformation     
-        if max_off_s ~= 0
-            handle_anchor(1) = max_handleId;   
-            offsets(1, :) = max_offset_s;
+        % laplacian deformation 
+        
+        if max_off_val ~= 0
+            handle_anchor(1) = max_handleId;  
+            offsets(1, :) = max_off_val * max_off_dir;
             if mode == 1
                 iDeformed = lap2D(curves{i}, static_anchor, handle_anchor, offsets);
             else
-                iDeformed = translateCurve(curves{i}, max_offset_s);
+                iDeformed = translateCurve(curves{i},  offsets(1, :));
             end
             deformed{i}(s1 : s2, :) = iDeformed(s1 : s2, :);
         end
+%         itest = 0;
+%         while max_off_val ~= 0 && itest < 5 
+%             offsets(1, :) = max_off_dir * max_off_val;
+%             if mode == 1
+%                 iDeformed = lap2D(curves{i}, static_anchor, handle_anchor, offsets);
+%             else
+%                 iDeformed = translateCurve(curves{i}, max_off_dir);
+%             end
+%             if ifOutOfPoly(iDeformed, Trunk) == 0
+%                 deformed{i}(s1 : s2, :) = iDeformed(s1 : s2, :);
+%                 break;
+%             end
+%             max_off_val = max_off_val / 2;
+%             itest = itest + 1;
+%         end
     end % curve seg
+end
+end
+
+function outOfPoly = ifOutOfPoly(seg, T)
+nOut = 0;
+for i = 1 : length(seg)
+    inPoly = inpolygon(seg(i, 1), seg(i, 2), T(:, 1), T(:, 2));
+    if inPoly == 0
+        nOut = nOut + 1;
+    end
+end
+if nOut < length(seg) * 0.1
+    outOfPoly = 0;
+else 
+    outOfPoly = 1;
 end
 end

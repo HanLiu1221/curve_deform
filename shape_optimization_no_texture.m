@@ -14,8 +14,8 @@ clear;
 addpath(genpath('./'));
 
 %% load curves
-load('./input/curves4deform_noGap.mat');
-%load('./input/curves4deform_6examples.mat');
+%load('./input/curves4deform_noGap.mat');
+load('./input/curves4deform_6examples.mat');
 for id = 1 : length(curves4deform)
     %% 1. get the original RIOT
     

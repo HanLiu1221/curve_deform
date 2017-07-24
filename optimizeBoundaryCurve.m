@@ -109,8 +109,10 @@ while area_overlap > overlap_thr
     if iter >= max_iter
         break;
     end
+    prevCurves = curves;
     [curves, area_gap, area_overlap] = eliminate_overlaps(curves, T_P);
     if area_overlap >= prev_overlap
+        curves = prevCurves;
         disp('overlap  not changed.');
         break;
     end
@@ -128,7 +130,7 @@ while area_overlap > overlap_thr
     disp(strcat('===Iter', num2str(iter), '==='));
     disp(strcat('area of overlap: ', num2str(area_overlap)));
     disp(strcat('area of gap: ', num2str(area_gap)));
-    disp(strcat('deformation energy: ', num2str(deformEnergy)));
+    %disp(strcat('deformation energy: ', num2str(deformEnergy)));
     prev_overlap = area_overlap;
 end
 
@@ -141,22 +143,25 @@ end
 overlap_thr = max(overlap_thr, area_overlap);
 %% 4. iteratively eliminate gaps
 iter = 0;
-gap_thr = 0.001;
+gap_thr = 0.0001;
 disp('***Start Gap Elimination***');
 disp('===Gap Stage 1: Deforming each cuve in mid resolution===');
 prev_gap = area_gap;
 % global is useless, since it's already in a full state from overlap stage
 resolution = '_mid'; 
 while area_gap > gap_thr && iter < max_iter
+    preCurves = curves;
     [curves, area_gap, area_overlap] = ...
         deformCurve_lap_gap(curves, T_P, feaIds, overlap_thr);
     deformEnergy = 0; % getDeformationEnergy(curves, prev);
     iter = iter + 1;    
     if (area_overlap > overlap_thr)
+        curves = preCurves;
         disp('Cause overlaps.');
         break;
     end
     if area_gap == prev_gap
+        curves = preCurves;
         disp('Gaps was not changed.');
         break;
     end
@@ -179,6 +184,7 @@ end
 
 disp('===Gap Stage 2: Deforming each cuve in high resolution===');
 iter = 0;
+max_iter = 15;
 resolution = '_local';
 while area_gap > gap_thr && iter < max_iter
     [curves, area_gap, area_overlap] = eliminate_gaps(curves, T_P, overlap_thr);

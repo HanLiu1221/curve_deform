@@ -15,7 +15,7 @@ addpath(genpath('./'));
 
 %% load curves
 %load('./input/curves4deform_noGap.mat');
-for id = 2 : 6
+for id = 1 : 6
     %% 1. get the original RIOT
     dataFolder = strcat('./input/riot_', num2str(id), '/');
     if ~exist(dataFolder)
