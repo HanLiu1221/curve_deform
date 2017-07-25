@@ -127,6 +127,14 @@ for id = 1 : 6
     saveas(gcf, tex_file, 'png');
     %set(h, 'CData', p_image, 'FaceColor','texturemap');
     
+    mesh_file = strcat(folder, 'original_mesh_', num2str(id));
+    figure;
+    subplot(1, 2, 1);
+    simpplot(VP, FP);
+    subplot(1, 2, 2);
+    simpplot(VQ, FQ);
+    saveas(gcf, mesh_file, 'png');
+    
     %% 5. boundary curve optimization
     [P_o, P_g] = optimizeBoundaryCurve(P, T_P, T_Q, pfolder, 0);
     [Q_o, Q_g]  = optimizeBoundaryCurve(Q, T_Q, T_P, qfolder, 1);
@@ -141,8 +149,6 @@ for id = 1 : 6
     show_curves(P_o, tran_P_o, 0, Q_o, tran_Q_o);
     tex_file_p_o = strcat(folder, 'overlap_tex_p_', num2str(id), '.png');
     tex_file_q_o = strcat(folder, 'overlap_tex_q_', num2str(id), '.png');
-    mesh_file_p_o = strcat(folder, 'overlap_mesh_p_', num2str(id), '.png');
-    mesh_file_q_o = strcat(folder, 'overlap_mesh_q_', num2str(id), '.png');
     
     Off_P_O = computeOffset(VP, handleIds_P, tran_P_o);
     VPO = lap2D_Tri(VP, VF_P, fixIds_P, handleIds_P, Off_P_O);
@@ -157,24 +163,20 @@ for id = 1 : 6
     tex_file_o = strcat(folder, 'overlap_texture_', num2str(id));
     saveas(gcf, tex_file_o, 'png');
     
-%     [FPO, VPO, TVPO] = computeTexture(tran_P_o, S_p, T_p, mesh_file_p_o);
-%     drawTexture(p_image, FPO, VPO, TVPO, tex_file_p_o);
-%     [FQO, VQO, TVQO] = computeTexture(tran_Q_o, S_q, T_q, mesh_file_q_o);
-%     drawTexture(q_image, FQO, VQO, TVQO, tex_file_q_o);
-    
+    mesh_file_g = strcat(folder, 'overlap_mesh_', num2str(id));
+     figure;
+     subplot(1, 2, 1);
+     simpplot(VPO, FP);
+     subplot(1, 2, 2);
+     simpplot(VQO, FQ);
+     saveas(gcf, mesh_file_g, 'png');
+
     % after overlap
     tran_P_g = transform_curves(P_g, T_Q, scale);
     tran_Q_g = transform_curves(Q_g, T_P, scale);
     show_curves(P_g, tran_P_g, 0, Q_g, tran_Q_g);
     tex_file_p_g = strcat(folder, 'gap_tex_p_', num2str(id), '.png');
-    tex_file_q_g = strcat(folder, 'gap_tex_q_', num2str(id), '.png');
-    mesh_file_p_g = strcat(folder, 'gap_mesh_p_', num2str(id), '.png');
-    mesh_file_q_g = strcat(folder, 'gap_mesh_q_', num2str(id), '.png');
-    
-%     [FPG, VPG, TVPG] = computeTexture(tran_P_o, S_p, T_p, mesh_file_p_g);
-%     drawTexture(p_image, FPG, VPG, TVPG, tex_file_p_g);
-%     [FQG, VQG, TVQG] = computeTexture(tran_Q_o, S_q, T_q, mesh_file_q_g);
-%     drawTexture(q_image, FQG, VQG, TVQG, tex_file_q_g);
+    tex_file_q_g = strcat(folder, 'gap_tex_q_', num2str(id), '.png');    
 
     Off_P_G = computeOffset(VP, handleIds_P, tran_P_g);
     VPG = lap2D_Tri(VP, VF_P, fixIds_P, handleIds_P, Off_P_G);
@@ -188,6 +190,14 @@ for id = 1 : 6
     
     tex_file_g = strcat(folder, 'gap_texture_', num2str(id));
     saveas(gcf, tex_file_g, 'png');
+    
+    mesh_file_g = strcat(folder, 'gap_mesh_', num2str(id));
+    figure;
+    subplot(1, 2, 1);
+    simpplot(VPG, FP);
+    subplot(1, 2, 2);
+    simpplot(VQG, FQ);
+    saveas(gcf, mesh_file_g, 'png');
     
 end
 end
