@@ -84,17 +84,22 @@ for id = 1 : 6
     mesh_file_p = strcat(folder, 'ori_mesh_p_', num2str(id), '.png');
     mesh_file_q = strcat(folder, 'ori_mesh_q_', num2str(id), '.png');
     
-    %% original points & texture
-%     oP = getCurves(curves4deform_texture.C2, P);
-%     oQ = getCurves(curves4deform_texture.C1, Q);
+%     %% original points & texture
+%     dC2 = curves4deform_texture.deformed_C2;%(length(curves4deform_texture.deformed_C2) : -1 : 1, :);
+%     dC1 = curves4deform_texture.deformed_C1;%(length(curves4deform_texture.deformed_C1) : -1 : 1, :);
+%     [dC2, id2] = reOrderCurve(dC2, tran_P{1}(1, :));
+%     [dC1, id1] = reOrderCurve(dC1, tran_Q{1}(1, :));
+%     C2 = curves4deform_texture.C2;%(length(curves4deform_texture.C2) : -1 : 1, :);
+%     C1 = curves4deform_texture.C1;%(length(curves4deform_texture.C1) : -1 : 1, :);
+%     oP = getCurves(C2, P);
+%     oQ = getCurves(C1, Q);
 %     
-%     [FP, VP, TVP, nboundaryPnts_P, fixIds_P, handleIds_P] = ...
+%     
+%     [FP, VP, TVP, fixIds_P, handleIds_P] = ...
 %         computeTexture(oP, S_p, T_p, mesh_file_p);
-%     figure;
-%     plot(VP(handleIds_P, 1), VP(handleIds_P, 2), 'r.');
 %     VF_P = findVertexRing(VP, FP);
 %     drawTexture(p_image, FP, VP, TVP, tex_file_p);
-%     [FQ, VQ, TVQ, nboundaryPnts_Q, fixIds_Q, handleIds_Q] = ...
+%     [FQ, VQ, TVQ, fixIds_Q, handleIds_Q] = ...
 %         computeTexture(oQ, S_q, T_q, mesh_file_q);
 %     VF_Q = findVertexRing(VQ, FQ);
 %     drawTexture(q_image, FQ, VQ, TVQ, tex_file_q);
@@ -105,24 +110,24 @@ for id = 1 : 6
 % 
 %     Off_P = computeOffset(VP, handleIds_P, tran_P);
 %     VPD = lap2D_Tri(VP, VF_P, fixIds_P, handleIds_P, Off_P);
-%     %simpplot(VPD, FP);
+%     simpplot(VPD, FP);
 %     drawTexture(p_image, FP, VPD, TVP, tex_file_p_ori);
 %     Off_Q = computeOffset(VQ, handleIds_Q,tran_Q);
 %     VQD = lap2D_Tri(VQ, VF_Q, fixIds_Q, handleIds_Q, Off_Q);
 %     drawTexture(q_image, FQ, VQD, TVQ, tex_file_q_ori);
     
-    [FP, VP, TVP, nboundaryPnts_P, fixIds_P, handleIds_P] = ...
+    [FP, VP, TVP, fixIds_P, handleIds_P] = ...
         computeTexture(tran_P, S_p, T_p, mesh_file_p);
     VF_P = findVertexRing(VP, FP);
-    [FQ, VQ, TVQ, nboundaryPnts_Q, fixIds_Q, handleIds_Q] = ...
+    [FQ, VQ, TVQ, fixIds_Q, handleIds_Q] = ...
         computeTexture(tran_Q, S_q, T_q, mesh_file_q);
     VF_Q = findVertexRing(VQ, FQ);
     
     figure;
     subplot(1,2,1);
-    drawTexture(p_image, FP, VP, TVP, tex_file_p);   
-    subplot(1,2,2);
     drawTexture(q_image, FQ, VQ, TVQ, tex_file_q);
+    subplot(1,2,2);
+    drawTexture(p_image, FP, VP, TVP, tex_file_p);   
     tex_file = strcat(folder, 'original_texture_', num2str(id));
     saveas(gcf, tex_file, 'png');
     %set(h, 'CData', p_image, 'FaceColor','texturemap');
@@ -130,9 +135,9 @@ for id = 1 : 6
     mesh_file = strcat(folder, 'original_mesh_', num2str(id));
     figure;
     subplot(1, 2, 1);
-    simpplot(VP, FP);
-    subplot(1, 2, 2);
     simpplot(VQ, FQ);
+    subplot(1, 2, 2);
+    simpplot(VP, FP);
     saveas(gcf, mesh_file, 'png');
     
     %% 5. boundary curve optimization
@@ -152,13 +157,13 @@ for id = 1 : 6
     
     Off_P_O = computeOffset(VP, handleIds_P, tran_P_o);
     VPO = lap2D_Tri(VP, VF_P, fixIds_P, handleIds_P, Off_P_O);
-    figure;
-    subplot(1,2,1);
-    drawTexture(p_image, FP, VPO, TVP, tex_file_p_o);
     Off_Q_O = computeOffset(VQ, handleIds_Q, tran_Q_o);
     VQO = lap2D_Tri(VQ, VF_Q, fixIds_Q, handleIds_Q, Off_Q_O);
-    subplot(1,2,2);
+    figure;
+    subplot(1,2,1);
     drawTexture(q_image, FQ, VQO, TVQ, tex_file_q_o);
+    subplot(1,2,2);
+    drawTexture(p_image, FP, VPO, TVP, tex_file_p_o);
     
     tex_file_o = strcat(folder, 'overlap_texture_', num2str(id));
     saveas(gcf, tex_file_o, 'png');
@@ -166,9 +171,9 @@ for id = 1 : 6
     mesh_file_g = strcat(folder, 'overlap_mesh_', num2str(id));
      figure;
      subplot(1, 2, 1);
-     simpplot(VPO, FP);
-     subplot(1, 2, 2);
      simpplot(VQO, FQ);
+     subplot(1, 2, 2);
+     simpplot(VPO, FP);
      saveas(gcf, mesh_file_g, 'png');
 
     % after overlap
@@ -194,17 +199,33 @@ for id = 1 : 6
     mesh_file_g = strcat(folder, 'gap_mesh_', num2str(id));
     figure;
     subplot(1, 2, 1);
-    simpplot(VPG, FP);
-    subplot(1, 2, 2);
     simpplot(VQG, FQ);
+    subplot(1, 2, 2);
+    simpplot(VPG, FP);
     saveas(gcf, mesh_file_g, 'png');
     
 end
 end
 
+function [rP, rid] = reOrderCurve(P, start)
+idx = find(P(:,1) == start(1));
+idy = find(P(:,2) == start(2));
+id = intersect(idx, idy);
+if isempty(id)
+    if ~isempty(idx)
+        id = idx;
+    else
+        id = idy;
+    end
+end
+rid = id(1)
+rP = [P(rid : length(P), :); P(1 : rid - 1, :)];
+end
+
 function curves = getCurves(P, C)
 curves = cell(1, length(C));
 id = 1;
+figure;
 for i = 1 : length(curves)
     curves{i} = zeros(size(C{i}));
     for j = 1 : length(C{i}) - 1
@@ -216,6 +237,7 @@ for i = 1 : length(curves)
     else
         curves{i}(length(C{i}), :) = P(id + 1, :);
     end
+    plot(curves{i}(:, 1), curves{i}(:, 2),'k-'); hold on;
 end
 end
 
@@ -273,7 +295,7 @@ for i = 1 : length(curves)
 end
 end
 
-function [F, V, TV, nboundaryPnts, fixIds, handleIds] = ...
+function [F, V, TV, fixIds, handleIds] = ...
     computeTexture(tran_P, S, T, mesh_file_p)
     nboundaryPnts = 0;
     nFix = length(tran_P);
@@ -345,9 +367,9 @@ function [F, V, TV, nboundaryPnts, fixIds, handleIds] = ...
     end
     fixIds = setdiff(fixIds, handleIds);
 %     intersect(fixIds,handleIds)
-%     figure; 
-%     plot(V(handleIds,1),V(handleIds,2),'k.'); hold on;
-%     plot(V(fixIds,1),V(fixIds,2),'r.');
+    figure; 
+    plot(V(handleIds,1),V(handleIds,2),'k.'); hold on;
+    plot(V(fixIds,1),V(fixIds,2),'r.');
 end
 
 function drawTexture(p_image, FF, VV, TV, tex_file_p)
