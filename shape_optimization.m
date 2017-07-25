@@ -114,11 +114,17 @@ for id = 1 : 6
     [FP, VP, TVP, nboundaryPnts_P, fixIds_P, handleIds_P] = ...
         computeTexture(tran_P, S_p, T_p, mesh_file_p);
     VF_P = findVertexRing(VP, FP);
-    drawTexture(p_image, FP, VP, TVP, tex_file_p);
     [FQ, VQ, TVQ, nboundaryPnts_Q, fixIds_Q, handleIds_Q] = ...
         computeTexture(tran_Q, S_q, T_q, mesh_file_q);
     VF_Q = findVertexRing(VQ, FQ);
+    
+    figure;
+    subplot(1,2,1);
+    drawTexture(p_image, FP, VP, TVP, tex_file_p);   
+    subplot(1,2,2);
     drawTexture(q_image, FQ, VQ, TVQ, tex_file_q);
+    tex_file = strcat(folder, 'original_texture_', num2str(id));
+    saveas(gcf, tex_file, 'png');
     %set(h, 'CData', p_image, 'FaceColor','texturemap');
     
     %% 5. boundary curve optimization
@@ -312,20 +318,26 @@ function [F, V, TV, nboundaryPnts, fixIds, handleIds] = ...
             fid = fid + 1;
         end
     end
-%     fixIds = fIds(1, 1:fid-1);
-%        if isempty(fixIds)
-%            fixIds = [length(handleIds) length(handleIds) + 5];
-%        end
-    
+
     for i = 1 : length(fixIds)
         id = fixIds(i);
         fixIds(i) = I2(id); % in VV
     end
-   
+    
+    % add fix points
+    isInsidePoly = feval(@dpoly, V, V(fixIds, :)) < 0.001;
+    insideIds = find(isInsidePoly == 1);
+    fixIds = unique([fixIds insideIds']);
+    
     for i = 1 : 1 : length(handleIds)
         id = handleIds(i);
         handleIds(i) = I2(id);
     end
+    fixIds = setdiff(fixIds, handleIds);
+%     intersect(fixIds,handleIds)
+%     figure; 
+%     plot(V(handleIds,1),V(handleIds,2),'k.'); hold on;
+%     plot(V(fixIds,1),V(fixIds,2),'r.');
 end
 
 function drawTexture(p_image, FF, VV, TV, tex_file_p)
@@ -338,7 +350,7 @@ function drawTexture(p_image, FF, VV, TV, tex_file_p)
     V = [VV zeros(nv,1)];
     patcht(FF, V, FF, TV, p_image);
     axis equal; axis off;
-    saveas(gcf, tex_file_p, 'png');
+    %saveas(gcf, tex_file_p, 'png');
 end
 
 function tp = mapTextureCoord(p, S, T)
