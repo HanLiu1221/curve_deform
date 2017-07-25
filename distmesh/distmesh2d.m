@@ -1,4 +1,4 @@
-function [p,t,h]=distmesh2d(fd,fh,h0,bbox,pfix,varargin)
+function [p, t, I1, I2]=distmesh2d(fd,fh,h0,bbox,pfix,varargin)
 %DISTMESH2D 2-D Mesh Generator using Distance Functions.
 %   [P,T]=DISTMESH2D(FD,FH,H0,BBOX,PFIX,FPARAMS)
 %
@@ -69,7 +69,7 @@ p=p(feval(fd,p,varargin{:})<geps,:);                 % Keep only d<0 points
 r0=1./feval(fh,p,varargin{:}).^2;                    % Probability to keep point
 p=p(rand(size(p,1),1)<r0./max(r0),:);                % Rejection method
 if ~isempty(pfix), p=setdiff(p,pfix,'rows'); end     % Remove duplicated nodes
-pfix=unique(pfix,'rows'); nfix=size(pfix,1);
+[pfix, I1, I2] =unique(pfix,'rows'); nfix=size(pfix,1);
 p=[pfix; p];                                         % Prepend fix points
 N=size(p,1);                                         % Number of points N
 
@@ -123,5 +123,5 @@ while 1
 end
 
 % Clean up and plot final mesh
-[p,t]=fixmesh(p,t);
+%[p,t]=fixmesh(p,t);
 h = simpplot(p,t)

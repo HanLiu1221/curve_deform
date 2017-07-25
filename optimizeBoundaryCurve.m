@@ -136,6 +136,7 @@ end
 
 P_o = curves;
 P_g = curves;
+%return;
 
 if area_overlap > 1e-3
     return;

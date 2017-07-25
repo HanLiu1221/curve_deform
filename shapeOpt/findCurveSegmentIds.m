@@ -33,7 +33,7 @@ for i = 1 : n
     tmp(1) = segs(1);
     id = 1;
     for p = 2 : length(segs)
-        if segs(p) - tmp(id) >= min_num_points_in_seg
+        if segs(p) - tmp(id) >= min_num_points_in_seg% * 2
             id = id + 1;
             tmp(id) = segs(p);
         end

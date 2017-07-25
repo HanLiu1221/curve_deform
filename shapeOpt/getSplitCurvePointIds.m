@@ -19,7 +19,7 @@ j = 1;
 nthr = 15;
 for i = 1:length(sids)
     id = sids(i);
-    if id <= dt || id >= length(curve) - dt
+    if id <= dt || id >= n - dt
         continue;
     end
     if j > 1 && sids(i) - pids(j - 1) < nthr

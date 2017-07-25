@@ -35,7 +35,7 @@ for i = 1 : nCurves
         max_off_s = 0;
         max_offset_s = [0, 0];
         max_handleId = floor((s1 + s2)/2);
-        for ip = 1 : size(ipoints, 1)
+        for ip = n2static : size(ipoints, 1) - n2static
             pi = ipoints(ip, :);
             % find nearest neighboring point
             min_dij = intmax('int64');

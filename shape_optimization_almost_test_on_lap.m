@@ -85,41 +85,59 @@ for id = 1 : 6
     mesh_file_q = strcat(folder, 'ori_mesh_q_', num2str(id), '.png');
     
     %% original points & texture
-%     oP = getCurves(curves4deform_texture.C2, P);
-%     oQ = getCurves(curves4deform_texture.C1, Q);
-%     
-%     [FP, VP, TVP, nboundaryPnts_P, fixIds_P, handleIds_P] = ...
-%         computeTexture(oP, S_p, T_p, mesh_file_p);
-%     figure;
-%     plot(VP(handleIds_P, 1), VP(handleIds_P, 2), 'r.');
-%     VF_P = findVertexRing(VP, FP);
-%     drawTexture(p_image, FP, VP, TVP, tex_file_p);
-%     [FQ, VQ, TVQ, nboundaryPnts_Q, fixIds_Q, handleIds_Q] = ...
-%         computeTexture(oQ, S_q, T_q, mesh_file_q);
-%     VF_Q = findVertexRing(VQ, FQ);
-%     drawTexture(q_image, FQ, VQ, TVQ, tex_file_q);
-%     
-%     tex_file_p_ori = strcat(folder, 'original_tex_p_', num2str(id), '.png');
-%     tex_file_q_ori = strcat(folder, 'original_tex_q_', num2str(id), '.png');
-%     
-% 
-%     Off_P = computeOffset(VP, handleIds_P, tran_P);
-%     VPD = lap2D_Tri(VP, VF_P, fixIds_P, handleIds_P, Off_P);
-%     %simpplot(VPD, FP);
-%     drawTexture(p_image, FP, VPD, TVP, tex_file_p_ori);
-%     Off_Q = computeOffset(VQ, handleIds_Q,tran_Q);
-%     VQD = lap2D_Tri(VQ, VF_Q, fixIds_Q, handleIds_Q, Off_Q);
-%     drawTexture(q_image, FQ, VQD, TVQ, tex_file_q_ori);
+    oP = getCurves(curves4deform_texture.C2, P);
+    oQ = getCurves(curves4deform_texture.C1, Q);
+%     figure; 
+%     % test
+%     test_C2 = zeros(size(curves4deform_texture.C2));
+%     test_deformed_C2 = zeros(size(curves4deform_texture.deformed_C2));
+%     for i = 1 : length(curves4deform_texture.deformed_C2)
+%         test_deformed_C2(i, :) = mapTextureCoord(curves4deform_texture.deformed_C2(i, :),S_p, T_p);
+%         test_C2(i, :) = mapTextureCoord(curves4deform_texture.C2(i, :),S_p, T_p);
+%     end
+%     imshow(p_image); hold on;
+%     imshow(curves4deform_texture.bw2); hold on;
+%     plot(test_C2(:, 1), test_C2(:, 2), 'b--');
+%     plot(test_deformed_C2(:, 1), test_deformed_C2(:, 2), 'r--');
     
     [FP, VP, TVP, nboundaryPnts_P, fixIds_P, handleIds_P] = ...
-        computeTexture(tran_P, S_p, T_p, mesh_file_p);
+        computeTexture(oP, S_p, T_p, mesh_file_p);
+    figure;
+    plot(VP(handleIds_P, 1), VP(handleIds_P, 2), 'r.');
     VF_P = findVertexRing(VP, FP);
     drawTexture(p_image, FP, VP, TVP, tex_file_p);
     [FQ, VQ, TVQ, nboundaryPnts_Q, fixIds_Q, handleIds_Q] = ...
-        computeTexture(tran_Q, S_q, T_q, mesh_file_q);
+        computeTexture(oQ, S_q, T_q, mesh_file_q);
     VF_Q = findVertexRing(VQ, FQ);
     drawTexture(q_image, FQ, VQ, TVQ, tex_file_q);
-    %set(h, 'CData', p_image, 'FaceColor','texturemap');
+    
+    tex_file_p_ori = strcat(folder, 'original_tex_p_', num2str(id), '.png');
+    tex_file_q_ori = strcat(folder, 'original_tex_q_', num2str(id), '.png');
+    
+%     figure;
+%     plot(VP(:, 1), VP(:, 2), 'k.'); hold on;
+%     for i = 1 : length(tran_P)
+%         plot(tran_P{i}(:, 1), tran_P{i}(:, 2), 'b-');
+%         hold on;
+%     end
+    
+    Off_P = computeOffset(VP, handleIds_P, tran_P);
+    VPD = lap2D_Tri(VP, VF_P, fixIds_P, handleIds_P, Off_P);
+%     plot(VP(:, 1), VP(:, 2), 'm.'); hold on;
+%     plot(VPD(:, 1), VPD(:, 2), 'k.');
+    simpplot(VPD, FP);
+    drawTexture(p_image, FP, VPD, TVP, tex_file_p_ori);
+    Off_Q = computeOffset(VQ, handleIds_Q,tran_Q);
+    VQD = lap2D_Tri(VQ, VF_Q, fixIds_Q, handleIds_Q, Off_Q);
+    drawTexture(q_image, FQ, VQD, TVQ, tex_file_q_ori);
+    
+%     [FP, VP, TVP, nboundaryPnts_P, fixIds_P] = computeTexture(tran_P, S_p, T_p, mesh_file_p);
+%     VF_P = findVertexRing(VP, FP);
+%     drawTexture(p_image, FP, VP, TVP, tex_file_p);
+%     [FQ, VQ, TVQ, nboundaryPnts_Q, fixIds_Q] = computeTexture(tran_Q, S_q, T_q, mesh_file_q);
+%     VF_Q = findVertexRing(VQ, FQ);
+%     drawTexture(q_image, FQ, VQ, TVQ, tex_file_q);
+%     %set(h, 'CData', p_image, 'FaceColor','texturemap');
     
     %% 5. boundary curve optimization
     [P_o, P_g] = optimizeBoundaryCurve(P, T_P, T_Q, pfolder, 0);
@@ -138,18 +156,12 @@ for id = 1 : 6
     mesh_file_p_o = strcat(folder, 'overlap_mesh_p_', num2str(id), '.png');
     mesh_file_q_o = strcat(folder, 'overlap_mesh_q_', num2str(id), '.png');
     
-    Off_P_O = computeOffset(VP, handleIds_P, tran_P_o);
-    VPO = lap2D_Tri(VP, VF_P, fixIds_P, handleIds_P, Off_P_O);
-    figure;
-    subplot(1,2,1);
+    Off_P_O = computeOffset(VP, nboundaryPnts_P, tran_P_o);
+    VPO = lap2D_Tri(VP, VF_P, fixIds_P, 1:nboundaryPnts_P, Off_P_O);
     drawTexture(p_image, FP, VPO, TVP, tex_file_p_o);
-    Off_Q_O = computeOffset(VQ, handleIds_Q, tran_Q_o);
-    VQO = lap2D_Tri(VQ, VF_Q, fixIds_Q, handleIds_Q, Off_Q_O);
-    subplot(1,2,2);
+    Off_Q_O = computeOffset(VQ, nboundaryPnts_Q, tran_Q_o);
+    VQO = lap2D_Tri(VQ, VF_Q, fixIds_Q, 1:nboundaryPnts_Q, Off_Q_O);
     drawTexture(q_image, FQ, VQO, TVQ, tex_file_q_o);
-    
-    tex_file_o = strcat(folder, 'overlap_texture_', num2str(id));
-    saveas(gcf, tex_file_o, 'png');
     
 %     [FPO, VPO, TVPO] = computeTexture(tran_P_o, S_p, T_p, mesh_file_p_o);
 %     drawTexture(p_image, FPO, VPO, TVPO, tex_file_p_o);
@@ -170,18 +182,12 @@ for id = 1 : 6
 %     [FQG, VQG, TVQG] = computeTexture(tran_Q_o, S_q, T_q, mesh_file_q_g);
 %     drawTexture(q_image, FQG, VQG, TVQG, tex_file_q_g);
 
-    Off_P_G = computeOffset(VP, handleIds_P, tran_P_g);
-    VPG = lap2D_Tri(VP, VF_P, fixIds_P, handleIds_P, Off_P_G);
-    figure;
-    subplot(1,2,1);
+    Off_P_G = computeOffset(VP, nboundaryPnts_P, tran_P_g);
+    VPG = lap2D_Tri(VP, VF_P, fixIds_P, 1:nboundaryPnts_P, Off_P_G);
     drawTexture(p_image, FP, VPG, TVP, tex_file_p_g);
-    Off_Q_G = computeOffset(VQ, handleIds_Q, tran_Q_g);
-    VQG = lap2D_Tri(VQ, VF_Q, fixIds_Q, handleIds_Q, Off_Q_G);
-    subplot(1,2,2);
-    drawTexture(q_image, FQ, VQG, TVQ, tex_file_q_g);
-    
-    tex_file_g = strcat(folder, 'gap_texture_', num2str(id));
-    saveas(gcf, tex_file_g, 'png');
+    Off_Q_G = computeOffset(VQ, nboundaryPnts_Q, tran_Q_g);
+    VQG = lap2D_Tri(VQ, VF_Q, fixIds_Q, 1:nboundaryPnts_Q, Off_Q_G);
+    drawTexture(q_image, FQG, VQG, TVQG, tex_file_q_g);
     
 end
 end
@@ -248,7 +254,7 @@ Off = zeros(length(handleId), 2);
 id = 1;
 %figure;
 for i = 1 : length(curves)
-    for j = 2 : length(curves{i}) - 1
+    for j = 1 : length(curves{i}) - 1
         Off(id, :) = curves{i}(j, :) - V(handleId(id), :);
 %         plot(curves{i}(j, 1),curves{i}(j, 2),'b.'); hold on;
 %         plot(V(handleId(id), 1),V(handleId(id), 2),'r.'); hold on;
@@ -267,14 +273,9 @@ function [F, V, TV, nboundaryPnts, fixIds, handleIds] = ...
         nboundaryPnts = nboundaryPnts + length(tran_P{i}) - 1;
     end
     pnts = zeros(nboundaryPnts, 2);
-    handleIds = zeros(1, nboundaryPnts - length(tran_P));
     bbox = zeros(2, 2);
     idx = 1;
-    hid = 1;
     for i = 1 : length(tran_P)
-        handleIds(1, hid : hid + length(tran_P{i}) - 3) = ...
-            idx + 1 : idx + length(tran_P{i}) - 2;
-        hid = hid + length(tran_P{i}) - 2;
         for j = 1 : length(tran_P{i}) - 1
             pnts(idx, :) = tran_P{i}(j, :);
             bbox(1, 1) = min(bbox(1, 1), pnts(idx, 1));
@@ -284,7 +285,7 @@ function [F, V, TV, nboundaryPnts, fixIds, handleIds] = ...
             idx = idx + 1;
         end
     end
-    
+    handleIds = 1 : 1 : length(pnts);
 
     %% triangulation
     % VV: n * 2 vertices
@@ -312,16 +313,18 @@ function [F, V, TV, nboundaryPnts, fixIds, handleIds] = ...
             fid = fid + 1;
         end
     end
-%     fixIds = fIds(1, 1:fid-1);
-%        if isempty(fixIds)
-%            fixIds = [length(handleIds) length(handleIds) + 5];
-%        end
+    fixIds = fIds(1, 1:fid-1);
+       if isempty(fixIds)
+           fixIds = [length(handleIds) length(handleIds) + 5];
+       end
     
-    for i = 1 : length(fixIds)
-        id = fixIds(i);
-        fixIds(i) = I2(id); % in VV
-    end
-   
+%     for i = 1 : length(fixIds)
+%         id = fixIds(i);
+%         fixIds(i) = I2(id); % in VV
+%     end
+    
+    
+    
     for i = 1 : 1 : length(handleIds)
         id = handleIds(i);
         handleIds(i) = I2(id);
@@ -333,7 +336,7 @@ function drawTexture(p_image, FF, VV, TV, tex_file_p)
 %     imshow(p_image); hold on;
 %     plot(TV(:, 1), TV(:, 2), 'b.');
 %     axis equal;
-    %figure;
+    figure;
     nv = length(VV);
     V = [VV zeros(nv,1)];
     patcht(FF, V, FF, TV, p_image);
