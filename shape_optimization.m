@@ -163,9 +163,9 @@ for id = 1 : 6
     %%test
 
     VPO_v = updatePoints(VP, handleIds_P, tran_P_o);
-    VPO = lap2D_Tri(VPO_v, VF_P, handleIds_P, [], []);
+    VPO = lap2D_Tri(VPO_v, VF_P, [handleIds_P fixIds_P], [], []);
     VQO_v = updatePoints(VQ, handleIds_Q, tran_Q_o);
-    VQO = lap2D_Tri(VQO_v, VF_Q, handleIds_Q, [], []);
+    VQO = lap2D_Tri(VQO_v, VF_Q, [handleIds_Q fixIds_Q], [], []);
     
     VPO = updatePoints(VPO, handleIds_P, tran_P_o);
     VQO = updatePoints(VQO, handleIds_Q, tran_Q_o);
@@ -198,9 +198,9 @@ for id = 1 : 6
 %     Off_Q_G = computeOffset(VQ, handleIds_Q, tran_Q_g);
 %     VQG = lap2D_Tri(VQ, VF_Q, fixIds_Q, handleIds_Q, Off_Q_G);
     VPG_v = updatePoints(VP, handleIds_P, tran_P_g);
-    VPG = lap2D_Tri(VPG_v, VF_P, handleIds_P, [], []);
+    VPG = lap2D_Tri(VPG_v, VF_P, [handleIds_P fixIds_P], [], []);
     VQG_v = updatePoints(VQ, handleIds_Q, tran_Q_g);
-    VQG = lap2D_Tri(VQG_v, VF_Q, handleIds_Q, [], []);
+    VQG = lap2D_Tri(VQG_v, VF_Q, [handleIds_Q fixIds_Q], [], []);
     
     VPG = updatePoints(VPG, handleIds_P, tran_P_g);
     VQG = updatePoints(VQG, handleIds_Q, tran_Q_g);
@@ -361,7 +361,7 @@ function [F, V, TV, fixIds, handleIds] = ...
     % IDX: re-ordered points index
     [V, F, I1, I2] = distmesh2d(@dpoly, @huniform, 0.1, bbox, pnts, pnts);
     axis equal; axis on;
-    saveas(gcf, mesh_file_p);
+    %saveas(gcf, mesh_file_p);
 
     TV = zeros(size(V)); %texture coordinate
     for i = 1 : length(TV)
@@ -397,9 +397,9 @@ function [F, V, TV, fixIds, handleIds] = ...
     end
     fixIds = setdiff(fixIds, handleIds);
 %     intersect(fixIds,handleIds)
-    figure; 
-    plot(V(handleIds,1),V(handleIds,2),'k.'); hold on;
-    plot(V(fixIds,1),V(fixIds,2),'r.');
+%     figure; 
+%     plot(V(handleIds,1),V(handleIds,2),'k.'); hold on;
+%     plot(V(fixIds,1),V(fixIds,2),'r.');
 end
 
 function drawTexture(p_image, FF, VV, TV, tex_file_p)
