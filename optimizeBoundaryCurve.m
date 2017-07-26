@@ -18,6 +18,7 @@ curves = cP;
 for i = 1 : length(curves)
     curves{i} = removeReps(curves{i});
 end
+
 % 3.1 find feature points
 nCurves = length(curves);
 featIds_noSplit = cell(1, nCurves);

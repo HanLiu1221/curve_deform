@@ -102,6 +102,7 @@ end;
 % axis equal;
 
 % moving the handle
+if ~isempty(handle_anchors)
 handles = curve(handle_anchors, :);
 new_handles = handles + offset;
 %[x_input y_input] = ginput(1);
@@ -112,7 +113,7 @@ start = lenr - length(x_input) * 2 + 1;
 rhs( start: 2 : lenr - 1) = x_input;
 rhs( start + 1: 2 : lenr) = y_input;
 anch_pos(length(anch_pos) - length(x_input) + 1 : length(anch_pos),:) = [x_input y_input];
-
+end
 % moving second handle vertex if exists
 % if length(handle_anchors) > 1
 %     [x_input y_input] = new_handles(2, :);

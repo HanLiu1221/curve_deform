@@ -155,10 +155,20 @@ for id = 1 : 6
     tex_file_p_o = strcat(folder, 'overlap_tex_p_', num2str(id), '.png');
     tex_file_q_o = strcat(folder, 'overlap_tex_q_', num2str(id), '.png');
     
-    Off_P_O = computeOffset(VP, handleIds_P, tran_P_o);
-    VPO = lap2D_Tri(VP, VF_P, fixIds_P, handleIds_P, Off_P_O);
-    Off_Q_O = computeOffset(VQ, handleIds_Q, tran_Q_o);
-    VQO = lap2D_Tri(VQ, VF_Q, fixIds_Q, handleIds_Q, Off_Q_O);
+%     Off_P_O = computeOffset(VP, handleIds_P, tran_P_o);
+%     VPO = lap2D_Tri(VP, VF_P, fixIds_P, handleIds_P, Off_P_O);
+%     Off_Q_O = computeOffset(VQ, handleIds_Q, tran_Q_o);
+%     VQO = lap2D_Tri(VQ, VF_Q, fixIds_Q, handleIds_Q, Off_Q_O);
+
+    %%test
+
+    VPO_v = updatePoints(VP, handleIds_P, tran_P_o);
+    VPO = lap2D_Tri(VPO_v, VF_P, handleIds_P, [], []);
+    VQO_v = updatePoints(VQ, handleIds_Q, tran_Q_o);
+    VQO = lap2D_Tri(VQO_v, VF_Q, handleIds_Q, [], []);
+    
+    VPO = updatePoints(VPO, handleIds_P, tran_P_o);
+    VQO = updatePoints(VQO, handleIds_Q, tran_Q_o);
     figure;
     subplot(1,2,1);
     drawTexture(q_image, FQ, VQO, TVQ, tex_file_q_o);
@@ -183,15 +193,23 @@ for id = 1 : 6
     tex_file_p_g = strcat(folder, 'gap_tex_p_', num2str(id), '.png');
     tex_file_q_g = strcat(folder, 'gap_tex_q_', num2str(id), '.png');    
 
-    Off_P_G = computeOffset(VP, handleIds_P, tran_P_g);
-    VPG = lap2D_Tri(VP, VF_P, fixIds_P, handleIds_P, Off_P_G);
+%     Off_P_G = computeOffset(VP, handleIds_P, tran_P_g);
+%     VPG = lap2D_Tri(VP, VF_P, fixIds_P, handleIds_P, Off_P_G);
+%     Off_Q_G = computeOffset(VQ, handleIds_Q, tran_Q_g);
+%     VQG = lap2D_Tri(VQ, VF_Q, fixIds_Q, handleIds_Q, Off_Q_G);
+    VPG_v = updatePoints(VP, handleIds_P, tran_P_g);
+    VPG = lap2D_Tri(VPG_v, VF_P, handleIds_P, [], []);
+    VQG_v = updatePoints(VQ, handleIds_Q, tran_Q_g);
+    VQG = lap2D_Tri(VQG_v, VF_Q, handleIds_Q, [], []);
+    
+    VPG = updatePoints(VPG, handleIds_P, tran_P_g);
+    VQG = updatePoints(VQG, handleIds_Q, tran_Q_g);
+    
     figure;
     subplot(1,2,1);
-    drawTexture(p_image, FP, VPG, TVP, tex_file_p_g);
-    Off_Q_G = computeOffset(VQ, handleIds_Q, tran_Q_g);
-    VQG = lap2D_Tri(VQ, VF_Q, fixIds_Q, handleIds_Q, Off_Q_G);
-    subplot(1,2,2);
     drawTexture(q_image, FQ, VQG, TVQ, tex_file_q_g);
+    subplot(1,2,2);
+    drawTexture(p_image, FP, VPG, TVP, tex_file_p_g);
     
     tex_file_g = strcat(folder, 'gap_texture_', num2str(id));
     saveas(gcf, tex_file_g, 'png');
@@ -290,6 +308,18 @@ for i = 1 : length(curves)
         Off(id, :) = curves{i}(j, :) - V(handleId(id), :);
 %         plot(curves{i}(j, 1),curves{i}(j, 2),'b.'); hold on;
 %         plot(V(handleId(id), 1),V(handleId(id), 2),'r.'); hold on;
+        id = id + 1;
+    end
+end
+end
+
+function V0 = updatePoints(V, handleId, curves)
+V0 = V;
+id = 1;
+%figure;
+for i = 1 : length(curves)
+    for j = 2 : length(curves{i}) - 1
+        V0(handleId(id), :) = curves{i}(j, :);
         id = id + 1;
     end
 end
