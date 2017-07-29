@@ -78,68 +78,87 @@ for id = 1 : 6
     T_p = [curves4deform_texture.trans2_x, curves4deform_texture.trans2_y];
     S_q = [curves4deform_texture.scale1_x, curves4deform_texture.scale1_y];
     T_q = [curves4deform_texture.trans1_x, curves4deform_texture.trans1_y];
-    %[Sp, Tp] = estimateTrans(pnts, [size(q_image, 1), size(q_image, 2)] * 1.0);
-    tex_file_p = strcat(folder, 'ori_tex_p_', num2str(id), '.png');
-    tex_file_q = strcat(folder, 'ori_tex_q_', num2str(id), '.png');
-    mesh_file_p = strcat(folder, 'ori_mesh_p_', num2str(id), '.png');
-    mesh_file_q = strcat(folder, 'ori_mesh_q_', num2str(id), '.png');
     
-%     %% original points & texture
-%     dC2 = curves4deform_texture.deformed_C2;%(length(curves4deform_texture.deformed_C2) : -1 : 1, :);
-%     dC1 = curves4deform_texture.deformed_C1;%(length(curves4deform_texture.deformed_C1) : -1 : 1, :);
-%     [dC2, id2] = reOrderCurve(dC2, tran_P{1}(1, :));
-%     [dC1, id1] = reOrderCurve(dC1, tran_Q{1}(1, :));
-%     C2 = curves4deform_texture.C2;%(length(curves4deform_texture.C2) : -1 : 1, :);
-%     C1 = curves4deform_texture.C1;%(length(curves4deform_texture.C1) : -1 : 1, :);
-%     oP = getCurves(C2, P);
-%     oQ = getCurves(C1, Q);
-%     
-%     
-%     [FP, VP, TVP, fixIds_P, handleIds_P] = ...
-%         computeTexture(oP, S_p, T_p, mesh_file_p);
-%     VF_P = findVertexRing(VP, FP);
-%     drawTexture(p_image, FP, VP, TVP, tex_file_p);
-%     [FQ, VQ, TVQ, fixIds_Q, handleIds_Q] = ...
-%         computeTexture(oQ, S_q, T_q, mesh_file_q);
-%     VF_Q = findVertexRing(VQ, FQ);
-%     drawTexture(q_image, FQ, VQ, TVQ, tex_file_q);
-%     
-%     tex_file_p_ori = strcat(folder, 'original_tex_p_', num2str(id), '.png');
-%     tex_file_q_ori = strcat(folder, 'original_tex_q_', num2str(id), '.png');
-%     
-% 
-%     Off_P = computeOffset(VP, handleIds_P, tran_P);
-%     VPD = lap2D_Tri(VP, VF_P, fixIds_P, handleIds_P, Off_P);
-%     simpplot(VPD, FP);
-%     drawTexture(p_image, FP, VPD, TVP, tex_file_p_ori);
-%     Off_Q = computeOffset(VQ, handleIds_Q,tran_Q);
-%     VQD = lap2D_Tri(VQ, VF_Q, fixIds_Q, handleIds_Q, Off_Q);
-%     drawTexture(q_image, FQ, VQD, TVQ, tex_file_q_ori);
+    %% original points & texture
+    dC2 = curves4deform_texture.deformed_C2(length(curves4deform_texture.deformed_C2) : -1 : 1, :);
+    dC1 = curves4deform_texture.deformed_C1;
+    [~, id2] = reOrderCurve(dC2, tran_P{1}(1, :));
+    [~, id1] = reOrderCurve(dC1, tran_Q{1}(1, :));
     
-    [FP, VP, TVP, fixIds_P, handleIds_P] = ...
-        computeTexture(tran_P, S_p, T_p, mesh_file_p);
+    C2 = curves4deform_texture.C2(length(curves4deform_texture.C2) : -1 : 1, :);
+    C1 = curves4deform_texture.C1;
+    
+    C2 = [C2(id2 : length(C2), :); C2(1 : id2 - 1, :)];
+    C1 = [C1(id1 : length(C1), :); C1(1 : id1 - 1, :)];
+    oP = getCurves(C2, P);
+    oQ = getCurves(C1, Q);    
+    
+    [FP, VP, TVP, fixIds_P, handleIds_P] = computeTexture(oP, S_p, T_p);    
     VF_P = findVertexRing(VP, FP);
-    [FQ, VQ, TVQ, fixIds_Q, handleIds_Q] = ...
-        computeTexture(tran_Q, S_q, T_q, mesh_file_q);
+    [FQ, VQ, TVQ, fixIds_Q, handleIds_Q] = computeTexture(oQ, S_q, T_q);
     VF_Q = findVertexRing(VQ, FQ);
     
     figure;
     subplot(1,2,1);
-    drawTexture(q_image, FQ, VQ, TVQ, tex_file_q);
+    drawTexture(q_image, FQ, VQ, TVQ);
     subplot(1,2,2);
-    drawTexture(p_image, FP, VP, TVP, tex_file_p);   
-    tex_file = strcat(folder, 'original_texture_', num2str(id));
-    saveas(gcf, tex_file, 'png');
-    %set(h, 'CData', p_image, 'FaceColor','texturemap');
+    drawTexture(p_image, FP, VP, TVP);
+    tex_file_ori = strcat(folder, 'original_texture_', num2str(id));
+    saveas(gcf, tex_file_ori, 'png');
     
-    mesh_file = strcat(folder, 'original_mesh_', num2str(id));
     figure;
     subplot(1, 2, 1);
     simpplot(VQ, FQ);
     subplot(1, 2, 2);
     simpplot(VP, FP);
+    mesh_file_ori = strcat(folder, 'original_mesh_', num2str(id));
+    saveas(gcf, mesh_file_ori, 'png');
+
+%     Off_P = computeOffset(VP, handleIds_P, tran_P);
+%     VP = lap2D_Tri(VP, VF_P, fixIds_P, handleIds_P, Off_P);
+%     Off_Q = computeOffset(VQ, handleIds_Q,tran_Q);
+%     VQ = lap2D_Tri(VQ, VF_Q, fixIds_Q, handleIds_Q, Off_Q);
+    
+    initialFixVids_P = computeInitialFixPoints(VP, T_P);
+    initialFixVids_Q = computeInitialFixPoints(VQ, T_Q);
+    boundaryFixIds_P = fixIds_P;
+    boundaryFixIds_Q = fixIds_Q;
+    
+    VP_v = updatePoints(VP, handleIds_P, boundaryFixIds_P, tran_P);
+    VP_1 = lap2D_Tri(VP_v, VF_P, [handleIds_P initialFixVids_P], [], []);
+    VQ_v = updatePoints(VQ, handleIds_Q, boundaryFixIds_Q, tran_Q);
+    VQ_1 = lap2D_Tri(VQ_v, VF_Q, [handleIds_Q, initialFixVids_Q], [], []);
+    VP = updatePoints(VP_1, handleIds_P, fixIds_P, tran_P);
+    VQ = updatePoints(VQ_1, handleIds_Q, fixIds_Q, tran_Q);
+    
+%     [FP, VP, TVP, fixIds_P, handleIds_P] = ...
+%         computeTexture(tran_P, S_p, T_p);
+%     VF_P = findVertexRing(VP, FP);
+%     [FQ, VQ, TVQ, fixIds_Q, handleIds_Q] = ...
+%         computeTexture(tran_Q, S_q, T_q);
+%     VF_Q = findVertexRing(VQ, FQ);
+    
+    figure;
+    subplot(1,2,1);
+    drawTexture(q_image, FQ, VQ, TVQ);
+    subplot(1,2,2);
+    drawTexture(p_image, FP, VP, TVP);   
+    tex_file = strcat(folder, 'initial_texture_', num2str(id));
+    saveas(gcf, tex_file, 'png');
+    
+    figure;
+    subplot(1, 2, 1);
+    simpplot(VQ, FQ);
+    subplot(1, 2, 2);
+    simpplot(VP, FP);
+    mesh_file = strcat(folder, 'initial_mesh_', num2str(id));
     saveas(gcf, mesh_file, 'png');
     
+    fixIds_P = computeAnchors(VP, fixIds_P, handleIds_P);
+    fixIds_Q = computeAnchors(VQ, fixIds_Q, handleIds_Q);
+    figure;
+    plot(VP(:, 1), VP(:,2), 'k.'); hold on;
+    plot(VP(fixIds_P,1),VP(fixIds_P,2),'r.');
     %% 5. boundary curve optimization
     [P_o, P_g] = optimizeBoundaryCurve(P, T_P, T_Q, pfolder, 0);
     [Q_o, Q_g]  = optimizeBoundaryCurve(Q, T_Q, T_P, qfolder, 1);
@@ -152,8 +171,6 @@ for id = 1 : 6
     tran_P_o = transform_curves(P_o, T_Q, scale);
     tran_Q_o = transform_curves(Q_o, T_P, scale);
     show_curves(P_o, tran_P_o, 0, Q_o, tran_Q_o);
-    tex_file_p_o = strcat(folder, 'overlap_tex_p_', num2str(id), '.png');
-    tex_file_q_o = strcat(folder, 'overlap_tex_q_', num2str(id), '.png');
     
 %     Off_P_O = computeOffset(VP, handleIds_P, tran_P_o);
 %     VPO = lap2D_Tri(VP, VF_P, fixIds_P, handleIds_P, Off_P_O);
@@ -162,54 +179,48 @@ for id = 1 : 6
 
     %%test
 
-    VPO_v = updatePoints(VP, handleIds_P, tran_P_o);
+    VPO_v = updatePoints(VP, handleIds_P, boundaryFixIds_P, tran_P_o);
     VPO = lap2D_Tri(VPO_v, VF_P, [handleIds_P fixIds_P], [], []);
-    VQO_v = updatePoints(VQ, handleIds_Q, tran_Q_o);
+    VQO_v = updatePoints(VQ, handleIds_Q, boundaryFixIds_Q, tran_Q_o);
     VQO = lap2D_Tri(VQO_v, VF_Q, [handleIds_Q fixIds_Q], [], []);
     
-    VPO = updatePoints(VPO, handleIds_P, tran_P_o);
-    VQO = updatePoints(VQO, handleIds_Q, tran_Q_o);
+    VPO = updatePoints(VPO, handleIds_P, boundaryFixIds_P, tran_P_o);
+    VQO = updatePoints(VQO, handleIds_Q, boundaryFixIds_Q, tran_Q_o);
+    
     figure;
     subplot(1,2,1);
-    drawTexture(q_image, FQ, VQO, TVQ, tex_file_q_o);
+    drawTexture(q_image, FQ, VQO, TVQ);
     subplot(1,2,2);
-    drawTexture(p_image, FP, VPO, TVP, tex_file_p_o);
+    drawTexture(p_image, FP, VPO, TVP);
     
     tex_file_o = strcat(folder, 'overlap_texture_', num2str(id));
     saveas(gcf, tex_file_o, 'png');
     
     mesh_file_g = strcat(folder, 'overlap_mesh_', num2str(id));
-     figure;
-     subplot(1, 2, 1);
-     simpplot(VQO, FQ);
-     subplot(1, 2, 2);
-     simpplot(VPO, FP);
-     saveas(gcf, mesh_file_g, 'png');
+    figure;
+    subplot(1, 2, 1);
+    simpplot(VQO, FQ);
+    subplot(1, 2, 2);
+    simpplot(VPO, FP);
+    saveas(gcf, mesh_file_g, 'png');
 
     % after overlap
     tran_P_g = transform_curves(P_g, T_Q, scale);
     tran_Q_g = transform_curves(Q_g, T_P, scale);
-    show_curves(P_g, tran_P_g, 0, Q_g, tran_Q_g);
-    tex_file_p_g = strcat(folder, 'gap_tex_p_', num2str(id), '.png');
-    tex_file_q_g = strcat(folder, 'gap_tex_q_', num2str(id), '.png');    
 
-%     Off_P_G = computeOffset(VP, handleIds_P, tran_P_g);
-%     VPG = lap2D_Tri(VP, VF_P, fixIds_P, handleIds_P, Off_P_G);
-%     Off_Q_G = computeOffset(VQ, handleIds_Q, tran_Q_g);
-%     VQG = lap2D_Tri(VQ, VF_Q, fixIds_Q, handleIds_Q, Off_Q_G);
-    VPG_v = updatePoints(VP, handleIds_P, tran_P_g);
+    VPG_v = updatePoints(VP, handleIds_P, boundaryFixIds_P, tran_P_g);
     VPG = lap2D_Tri(VPG_v, VF_P, [handleIds_P fixIds_P], [], []);
-    VQG_v = updatePoints(VQ, handleIds_Q, tran_Q_g);
+    VQG_v = updatePoints(VQ, handleIds_Q, boundaryFixIds_Q, tran_Q_g);
     VQG = lap2D_Tri(VQG_v, VF_Q, [handleIds_Q fixIds_Q], [], []);
     
-    VPG = updatePoints(VPG, handleIds_P, tran_P_g);
-    VQG = updatePoints(VQG, handleIds_Q, tran_Q_g);
+    VPG = updatePoints(VPG, handleIds_P, boundaryFixIds_P, tran_P_g);
+    VQG = updatePoints(VQG, handleIds_Q, boundaryFixIds_Q, tran_Q_g);
     
     figure;
     subplot(1,2,1);
-    drawTexture(q_image, FQ, VQG, TVQ, tex_file_q_g);
+    drawTexture(q_image, FQ, VQG, TVQ);
     subplot(1,2,2);
-    drawTexture(p_image, FP, VPG, TVP, tex_file_p_g);
+    drawTexture(p_image, FP, VPG, TVP);
     
     tex_file_g = strcat(folder, 'gap_texture_', num2str(id));
     saveas(gcf, tex_file_g, 'png');
@@ -243,7 +254,7 @@ end
 function curves = getCurves(P, C)
 curves = cell(1, length(C));
 id = 1;
-figure;
+%figure;
 for i = 1 : length(curves)
     curves{i} = zeros(size(C{i}));
     for j = 1 : length(C{i}) - 1
@@ -255,7 +266,7 @@ for i = 1 : length(curves)
     else
         curves{i}(length(C{i}), :) = P(id + 1, :);
     end
-    plot(curves{i}(:, 1), curves{i}(:, 2),'k-'); hold on;
+    %plot(curves{i}(:, 1), curves{i}(:, 2),'k-'); hold on;
 end
 end
 
@@ -299,34 +310,21 @@ end
 VF(VF == 0) = -1;
 end
 
-function Off = computeOffset(V, handleId, curves)
-Off = zeros(length(handleId), 2);
-id = 1;
-%figure;
-for i = 1 : length(curves)
-    for j = 2 : length(curves{i}) - 1
-        Off(id, :) = curves{i}(j, :) - V(handleId(id), :);
-%         plot(curves{i}(j, 1),curves{i}(j, 2),'b.'); hold on;
-%         plot(V(handleId(id), 1),V(handleId(id), 2),'r.'); hold on;
-        id = id + 1;
-    end
-end
-end
 
-function V0 = updatePoints(V, handleId, curves)
+function V0 = updatePoints(V, handleIds, fixIds,curves)
 V0 = V;
 id = 1;
 %figure;
 for i = 1 : length(curves)
+    V0(fixIds(i), :) = curves{i}(1, :);
     for j = 2 : length(curves{i}) - 1
-        V0(handleId(id), :) = curves{i}(j, :);
+        V0(handleIds(id), :) = curves{i}(j, :);
         id = id + 1;
     end
 end
 end
 
-function [F, V, TV, fixIds, handleIds] = ...
-    computeTexture(tran_P, S, T, mesh_file_p)
+function [F, V, TV, fixIds, handleIds] = computeTexture(tran_P, S, T)
     nboundaryPnts = 0;
     nFix = length(tran_P);
     fixIds = zeros(1, nFix);
@@ -359,9 +357,8 @@ function [F, V, TV, fixIds, handleIds] = ...
     % FF: nf * 3 faces
     figure;
     % IDX: re-ordered points index
-    [V, F, I1, I2] = distmesh2d(@dpoly, @huniform, 0.1, bbox, pnts, pnts);
+    [V, F, ~, I2] = distmesh2d(@dpoly, @huniform, 0.1, bbox, pnts, pnts);
     axis equal; axis on;
-    %saveas(gcf, mesh_file_p);
 
     TV = zeros(size(V)); %texture coordinate
     for i = 1 : length(TV)
@@ -369,50 +366,61 @@ function [F, V, TV, fixIds, handleIds] = ...
         TV(i, :) = mapTextureCoord(pos, S, T);
         TV(i, :) = [TV(i, 2), TV(i, 1)];
     end
-    
-    center = (bbox(1, :) + bbox(2, :)) / 2;
-    fid = 1;
-    fIds = zeros(1, length(V) - length(handleIds));
-    for i = length(handleIds) : 1 : length(V)
-        pos = V(i,:);
-        if norm(pos - center) < 0.1
-            fIds(fid) = i;
-            fid = fid + 1;
-        end
-    end
 
     for i = 1 : length(fixIds)
         id = fixIds(i);
         fixIds(i) = I2(id); % in VV
     end
     
-    % add fix points
-    isInsidePoly = feval(@dpoly, V, V(fixIds, :)) < 0.001;
-    insideIds = find(isInsidePoly == 1);
-    fixIds = unique([fixIds insideIds']);
+%     % add fix points
+%     isInsidePoly = feval(@dpoly, V, V(fixIds, :)) < 0.001;
+%     insideIds = find(isInsidePoly == 1);
+%     fixIds = unique([fixIds insideIds']);
     
     for i = 1 : 1 : length(handleIds)
         id = handleIds(i);
         handleIds(i) = I2(id);
     end
-    fixIds = setdiff(fixIds, handleIds);
+%     fixIds = setdiff(fixIds, handleIds);
 %     intersect(fixIds,handleIds)
 %     figure; 
 %     plot(V(handleIds,1),V(handleIds,2),'k.'); hold on;
 %     plot(V(fixIds,1),V(fixIds,2),'r.');
 end
 
-function drawTexture(p_image, FF, VV, TV, tex_file_p)
-%     figure;
-%     imshow(p_image); hold on;
-%     plot(TV(:, 1), TV(:, 2), 'b.');
-%     axis equal;
-    %figure;
+function fixVids = computeInitialFixPoints(V, T)
+c = [0, 0];
+for i = 1 : length(V)
+    c = c + V(i, :);
+end
+c = c / length(V);
+off = 0.15;
+for i = 1 : length(T)
+    dir = c - T(i, :);
+    dir = dir / norm(c - T(i, :));
+    T(i, :) = T(i, :) + off * dir;
+end
+isInsidePoly = feval(@dpoly, V, T) < 0.001;
+fixVids = find(isInsidePoly == 1);
+   fixVids = fixVids'; 
+end
+
+function fixIds = computeAnchors(V, initialFixIds, handleIds)
+   
+    % add fix points
+    isInsidePoly = feval(@dpoly, V, V(initialFixIds, :)) < 0.001;
+    insideIds = find(isInsidePoly == 1);
+    fixIds = unique([initialFixIds insideIds'])
+    fixIds = setdiff(fixIds, handleIds);
+%     intersect(fixIds,handleIds)
+
+end
+
+function drawTexture(p_image, FF, VV, TV)
     nv = length(VV);
     V = [VV zeros(nv,1)];
     patcht(FF, V, FF, TV, p_image);
     axis equal; axis off;
-    %saveas(gcf, tex_file_p, 'png');
 end
 
 function tp = mapTextureCoord(p, S, T)
