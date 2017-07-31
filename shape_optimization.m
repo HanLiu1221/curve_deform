@@ -1,6 +1,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Boundary deformation for a given shape, represented as a contour curve
+% Boundary deformation entry
 % Input: shape P, with Trunk T_P; Q is the RIOT of P, with Trunk T_Q
+%           with overlaps and gaps.
 % Output: 
 % Han Liu, 06/20/2017
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -13,20 +14,17 @@ close all;
 clear;
 addpath(genpath('./'));
 
-%% load curves
-%load('./input/curves4deform_noGap.mat');
-for id = 6 : 6
+%% load curves from a specified folder
+input_folder = './input/';
+for id = 1 : 6
     %% 1. get the original RIOT
-    dataFolder = strcat('./input/riot_', num2str(id), '/');
+    dataFolder = strcat(input_folder, 'riot_', num2str(id), '/');
     if ~exist(dataFolder)
         continue;
     end
     load(strcat(dataFolder, 'curves4deform_texture.mat'));
     P = curves4deform_texture.curves1;
     Q = curves4deform_texture.curves2;
-    
-%     P = curves4deform(id).curves1; % P
-%     Q = curves4deform(id).curves2; % Q
 
     T_P = get_candidate_trunk(P); % T_P
     T_Q = get_candidate_trunk(Q); % T_Q
